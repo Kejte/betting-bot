@@ -1,5 +1,4 @@
 from aiogram.fsm.state import StatesGroup, State
 
-class ForkActionState(StatesGroup):
-    WAITING_ACTION=State()
-    Calculating=State()
+class CalculateMoneyForkState(StatesGroup):
+    GET_AMOUNT=State()

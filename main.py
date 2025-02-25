@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from utils.commands import set_commands
 from aiogram.client.default import DefaultBotProperties
+from utils import states
 # from core.middlewares import RegisterMiddleware
 
 async def start_bot(bot: Bot):
@@ -30,8 +31,10 @@ async def load_bot():
     # dp.message.middleware.register(RegisterMiddleware())
     # dp.callback_query.middleware.register(RegisterMiddleware())
 
-    dp.message.register(handlers.hello_message)
+    dp.message.register(handlers.hello_message, Command(commands='start'))
     dp.callback_query.register(handlers.all_forks, F.data=='search_vilka')
+    dp.callback_query.register(handlers.pre_calculate_fork, F.data.startswith('calculate_money_fork'))
+    dp.message.register(handlers.calculate_fork, states.CalculateMoneyForkState.GET_AMOUNT)
     
     try:
         await dp.start_polling(bot)
