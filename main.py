@@ -8,7 +8,7 @@ from aiogram.filters import Command
 from utils.commands import set_commands
 from aiogram.client.default import DefaultBotProperties
 from utils import states
-# from core.middlewares import RegisterMiddleware
+
 
 async def start_bot(bot: Bot):
     await set_commands(bot)
