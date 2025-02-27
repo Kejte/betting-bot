@@ -2,15 +2,39 @@ from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from utils import keyboards
 from utils.parser import parse_fork
-from core.constants import DEFAULT_LINK
 from aiogram.fsm.context import FSMContext
 from utils.states import CalculateMoneyForkState
+import importlib
 
-async def hello_message(callback: CallbackQuery, bot: Bot):
+async def hello_message(callback: Message, bot: Bot):
     await bot.send_message(callback.from_user.id,'Здарова заебал', reply_markup=keyboards.hello_keyboard())
 
-async def all_forks(callback: CallbackQuery, bot: Bot, state: FSMContext):
-    forks = parse_fork(link=DEFAULT_LINK)
+async def required_bookers_list(callback: CallbackQuery, bot: Bot):
+    callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id, 
+        'Выберите первого букмекера', 
+        reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
+
+async def optional_bookers_list(callback: CallbackQuery, bot: Bot):
+    callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id, 
+        'Выберите второго букмекера\n\n'
+        f'Выбранный букмекер: {callback.data.split('_')[-1]}', 
+        reply_markup=keyboards.optional_bookers_list_keyboard(callback.data.split('_')[1],callback.data.split('_')[-1]))    
+
+async def search_fork(callback: CallbackQuery, bot: Bot):
+    callback.message.delete()
+    second_booker = callback.data.split('_')[-1] if callback.data.split('_')[-1] != 'any' else 'Любая бк' 
+    await bot.send_message(
+        callback.from_user.id,
+        f'Вы выбрали {callback.data.split('_')[-2]} - {second_booker}'
+    )
+    bookers = f'{callback.data.split('_')[-2]}_{callback.data.split('_')[-1]}'.upper()
+    module = importlib.import_module('core.constants')
+    bookers = getattr(module,bookers)
+    forks = parse_fork(bookers)
     fork = forks[0]
     responce = (f'Событие: {fork['event']}\n\n'  
                f'Вид спорта: {fork['sport']}\n\n' 

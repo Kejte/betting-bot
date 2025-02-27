@@ -32,7 +32,10 @@ async def load_bot():
     # dp.callback_query.middleware.register(RegisterMiddleware())
 
     dp.message.register(handlers.hello_message, Command(commands='start'))
-    dp.callback_query.register(handlers.all_forks, F.data=='search_vilka')
+    dp.callback_query.register(handlers.required_bookers_list, F.data.startswith('search'))
+    dp.callback_query.register(handlers.optional_bookers_list, F.data.startswith('required'))
+    dp.callback_query.register(handlers.search_fork,F.data.startswith('selected_money'))
+    # dp.callback_query.register(handlers.all_forks, F.data=='search_vilka')
     dp.callback_query.register(handlers.pre_calculate_fork, F.data.startswith('calculate_money_fork'))
     dp.message.register(handlers.calculate_fork, states.CalculateMoneyForkState.GET_AMOUNT)
     
