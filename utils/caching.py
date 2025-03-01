@@ -4,12 +4,15 @@ import json
 redis_client = redis.StrictRedis(host='redis', port=6379, db=0)
 
 def cache_forks(forks: list[dict], bookers: str):
-    redis_client.set(bookers, json.dump(forks),300)
+    for index, item in enumerate(forks):
+        serialized_dict = json.dumps(item)
+        redis_client.rpush(bookers,serialized_dict)
+    redis_client.expire(bookers,300)
 
-def get_cached_user_data(bookers, forks: list[dict]):
-    cached_data = redis_client.get(bookers)
-    if cached_data:
-        return json.loads(cached_data)
-    else:
-        cache_forks()
+def get_cached_fork_data(bookers):
+    forks = redis_client.lrange(bookers,0,-1)
+    deserialized_forks  = [json.loads(fork.decode('utf-8')) for fork in forks]
+    return deserialized_forks
+    
+
     

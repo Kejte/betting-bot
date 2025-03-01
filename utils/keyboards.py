@@ -39,11 +39,13 @@ def optional_bookers_list_keyboard(fork_type: str, first_booker: str) -> InlineK
     return builder.as_markup()
     
 
-def money_fork_keyboard(first_booker: str, first_coef: float, second_booker: str, second_coef: float, profit: float) -> InlineKeyboardMarkup:
+def money_fork_keyboard(first_booker: str, first_coef: float, second_booker: str, second_coef: float, profit: float, index: int, lenght: int, bookers: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
-    builder.button(text='Следующая', callback_data='next_money_fork')
-    builder.button(text='Предыдущая', callback_data='previous_money_fork')
+    if index + 1 != lenght:
+        builder.button(text='Следующая', callback_data=f'paginate_next_fork_{index+1}_{bookers}')
+    if index != 0:
+        builder.button(text='Предыдущая', callback_data=f'paginate_previous_fork_{index-1}_{bookers}')
     builder.button(text='Рассчитать вилку', callback_data=f'calculate_money_fork_{first_booker}_{first_coef}_{second_booker}_{second_coef}_{profit}')
     builder.button(text='Назад в меню', callback_data='main_menu')
 

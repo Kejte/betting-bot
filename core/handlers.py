@@ -3,9 +3,10 @@ from aiogram.types import CallbackQuery, Message
 from utils import keyboards
 from utils.parser import parse_fork
 from aiogram.fsm.context import FSMContext
-from utils.states import CalculateMoneyForkState
+from utils.states import CalculateMoneyForkState, FreebetDataState
 import importlib
-
+from utils.caching import cache_forks, get_cached_fork_data
+from utils.funcs import generate_fork_message, sort_freebet_forks
 
 async def hello_message(callback: Message, bot: Bot):
     await bot.send_message(callback.from_user.id,'Здарова заебал', reply_markup=keyboards.hello_keyboard())
@@ -34,19 +35,15 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
         'Ищу вилку'
     )
     bookers = f'{callback.data.split('_')[-2]}_{callback.data.split('_')[-1]}'.upper()
+    cache_key = bookers
     module = importlib.import_module('core.constants')
     bookers = getattr(module,bookers)
-    forks = parse_fork(bookers)
+    forks = get_cached_fork_data(cache_key)
+    if not forks:
+        forks = parse_fork(bookers)
+        cache_forks(forks, cache_key)
     fork = forks[0]
-    responce = (f'Событие: {fork['event']}\n\n'  
-               f'Вид спорта: {fork['sport']}\n\n' 
-               f'Лига/Чемпионат: {fork['championship']}\n\n'
-               f'Дата начала события: {fork['start_date']}\n\n'
-               f'Возраст вилки: {fork['lifetime']}\n\n'
-               f'Прибыль: {fork['profit']}\n\n'
-               f'Букмекеры: {fork['first_booker']} - {fork['second_booker']} \n\n'
-               f'Ставка на первом букмекере: {fork['bet_on_first_booker']} коэффицент - {fork['coef_on_first_booker']}\n\n'
-               f'Ставка на втором букмекере: {fork['bet_on_second_booker']} коэффицент - {fork['coef_on_second_booker']}')
+    responce = generate_fork_message(fork)
     await bot.send_message(
         callback.from_user.id, 
         responce, 
@@ -55,7 +52,36 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
         first_coef=float(fork['coef_on_first_booker']),
         second_booker=fork['second_booker'],
         second_coef=float(fork['coef_on_second_booker']),
-        profit=float(fork['profit'].split('%')[0])
+        profit=float(fork['profit'].split('%')[0]),
+        index=0,
+        lenght=len(forks),
+        bookers=cache_key
+        ))
+
+async def paginate_forks(callback: CallbackQuery, bot: Bot):
+    await callback.message.delete()
+    index = int(callback.data.split('_')[-3]) 
+    bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
+    forks = get_cached_fork_data(bookers)
+    if not forks:
+        module = importlib.import_module('core.constants')
+        url = getattr(module,bookers)
+        forks = parse_fork(url)
+        cache_forks(forks, bookers)
+    fork = forks[index]
+    responce = generate_fork_message(fork)
+    await bot.send_message(
+        callback.from_user.id, 
+        responce, 
+        reply_markup=keyboards.money_fork_keyboard(
+        first_booker=fork['first_booker'],
+        first_coef=float(fork['coef_on_first_booker']),
+        second_booker=fork['second_booker'],
+        second_coef=float(fork['coef_on_second_booker']),
+        profit=float(fork['profit'].split('%')[0]),
+        index=index,
+        lenght=len(forks),
+        bookers=bookers
         ))
 
 async def pre_calculate_fork(callback: CallbackQuery, bot: Bot, state: FSMContext):
@@ -89,3 +115,41 @@ async def calculate_fork(message: Message, bot: Bot, state: FSMContext):
         reply_markup=keyboards.money_fork_calculating_keyboard(context['first_booker'],context['first_coef'],context['second_booker'],context['second_coef'],context['profit'])
     )
     await state.clear()
+
+async def choice_freebet_booker(callback: CallbackQuery, bot: Bot):
+    await callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id, 
+        'Выберите букмекера с фрибетом', 
+        reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
+    
+async def get_freebet_amount(callback: CallbackQuery, bot: Bot, state: FSMContext):
+    booker = callback.data.split('_')[-1].upper() + '_ANY'
+    await bot.send_message(
+        callback.from_user.id,
+        'Введите номинал фрибета'
+    )
+    await state.set_state(FreebetDataState.GET_FREEBET_AMOUNT)
+    await state.update_data(booker=booker)
+
+async def get_freebet_coef(message: Message, bot: Bot, state: FSMContext):
+    await bot.send_message(
+        message.from_user.id,
+        'Ведите ограничение по коэффиценту'
+    )
+    await state.update_data(amount=message.text)
+    await state.set_state(FreebetDataState.GET_FREEBET_COEFF)
+
+async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
+    context = await state.get_data()
+    await bot.send_message(
+        message.from_user.id,
+        'Ищу вилку подходящую вашим параметрам\n\n'
+        f'Выбранный букмекер: {context['booker']}\n\n'
+        f'Номинал фрибета: {context['amount']}\n\n'
+        f'Ограничение по коэффиценту: {message.text}' 
+    )
+    forks = sort_freebet_forks(context['booker'], float(message.text))
+    fork = forks[0]
+    response = generate_fork_message(fork)
+    await bot.send_message(message.from_user.id, response)

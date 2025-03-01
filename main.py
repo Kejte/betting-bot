@@ -32,13 +32,18 @@ async def load_bot():
     # dp.callback_query.middleware.register(RegisterMiddleware())
 
     dp.message.register(handlers.hello_message, Command(commands='start'))
-    dp.callback_query.register(handlers.required_bookers_list, F.data.startswith('search'))
-    dp.callback_query.register(handlers.optional_bookers_list, F.data.startswith('required'))
+    dp.callback_query.register(handlers.hello_message,F.data=='main_menu')
+    dp.callback_query.register(handlers.required_bookers_list, F.data.startswith('search_money'))
+    dp.callback_query.register(handlers.optional_bookers_list, F.data.startswith('required_money'))
     dp.callback_query.register(handlers.search_fork,F.data.startswith('selected_money'))
-    # dp.callback_query.register(handlers.all_forks, F.data=='search_vilka')
+    dp.callback_query.register(handlers.paginate_forks,F.data.startswith('paginate'))
     dp.callback_query.register(handlers.pre_calculate_fork, F.data.startswith('calculate_money_fork'))
+    dp.callback_query.register(handlers.choice_freebet_booker, F.data.startswith('search_freebet'))
+    dp.callback_query.register(handlers.get_freebet_amount,F.data.startswith('required_freebet'))
     dp.message.register(handlers.calculate_fork, states.CalculateMoneyForkState.GET_AMOUNT)
-    
+    dp.message.register(handlers.get_freebet_coef, states.FreebetDataState.GET_FREEBET_AMOUNT)
+    dp.message.register(handlers.freebet_forks, states.FreebetDataState.GET_FREEBET_COEFF)
+
     try:
         await dp.start_polling(bot)
     finally:
