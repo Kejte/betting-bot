@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from utils.states import CalculateMoneyForkState, FreebetDataState
 import importlib
 from utils.caching import cache_forks, get_cached_fork_data
-from utils.funcs import generate_fork_message, sort_freebet_forks
+from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message
 
 async def hello_message(callback: Message, bot: Bot):
     await bot.send_message(callback.from_user.id,'Здарова заебал', reply_markup=keyboards.hello_keyboard())
@@ -145,11 +145,11 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
     await bot.send_message(
         message.from_user.id,
         'Ищу вилку подходящую вашим параметрам\n\n'
-        f'Выбранный букмекер: {context['booker']}\n\n'
+        f'Выбранный букмекер: {context['booker'][0] + context["booker"].split('_')[0][1:].lower()}\n\n'
         f'Номинал фрибета: {context['amount']}\n\n'
         f'Ограничение по коэффиценту: {message.text}' 
     )
-    forks = sort_freebet_forks(context['booker'], float(message.text))
+    forks = get_freebet_forks(context['booker'], float(message.text))
     fork = forks[0]
-    response = generate_fork_message(fork)
+    response = generate_freebet_fork_message(fork, int(context['amount']), context['booker'])
     await bot.send_message(message.from_user.id, response)
