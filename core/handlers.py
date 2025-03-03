@@ -173,7 +173,6 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
     index = int(callback.data.split('_')[-3]) 
     bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
     forks = get_freebet_forks(bookers,float(callback.data.split('_')[-5]),int(callback.data.split('_')[-4]))
-    print(callback.data)
     fork = forks[index]
     responce = generate_freebet_fork_message(fork,freebet=int(callback.data.split('_')[-4]),booker=bookers)
     await bot.send_message(
