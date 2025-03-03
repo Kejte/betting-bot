@@ -43,10 +43,23 @@ def money_fork_keyboard(first_booker: str, first_coef: float, second_booker: str
     builder = InlineKeyboardBuilder()
     
     if index + 1 != lenght:
-        builder.button(text='Следующая', callback_data=f'paginate_next_fork_{index+1}_{bookers}')
+        builder.button(text='Следующая', callback_data=f'paginate_money_next_fork_{index+1}_{bookers}')
     if index != 0:
-        builder.button(text='Предыдущая', callback_data=f'paginate_previous_fork_{index-1}_{bookers}')
+        builder.button(text='Предыдущая', callback_data=f'paginate_money_previous_fork_{index-1}_{bookers}')
     builder.button(text='Рассчитать вилку', callback_data=f'calculate_money_fork_{first_booker}_{first_coef}_{second_booker}_{second_coef}_{profit}')
+    builder.button(text='Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def freebet_fork_keyboard(index: int, lenght: int, bookers: str, max_coeff: float, freebet: int) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    
+    if index + 1 != lenght:
+        builder.button(text='Следующая', callback_data=f'paginate_freebet_next_fork_{max_coeff}_{int(freebet)}_{index+1}_{bookers}')
+    if index != 0:
+        builder.button(text='Предыдущая', callback_data=f'paginate_freebet_previous_fork_{max_coeff}_{int(freebet)}_{index-1}_{bookers}')
     builder.button(text='Назад в меню', callback_data='main_menu')
 
     builder.adjust(1)

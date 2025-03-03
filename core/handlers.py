@@ -42,7 +42,10 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
     if not forks:
         forks = parse_fork(bookers)
         cache_forks(forks, cache_key)
-    fork = forks[0]
+    try:
+        fork = forks[0]
+    except IndexError:
+        await bot.send_message(callback.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
     responce = generate_fork_message(fork)
     await bot.send_message(
         callback.from_user.id, 
@@ -125,31 +128,61 @@ async def choice_freebet_booker(callback: CallbackQuery, bot: Bot):
     
 async def get_freebet_amount(callback: CallbackQuery, bot: Bot, state: FSMContext):
     booker = callback.data.split('_')[-1].upper() + '_ANY'
+    await state.set_state(FreebetDataState.GET_FREEBET_AMOUNT)
     await bot.send_message(
         callback.from_user.id,
         'Введите номинал фрибета'
     )
-    await state.set_state(FreebetDataState.GET_FREEBET_AMOUNT)
     await state.update_data(booker=booker)
 
 async def get_freebet_coef(message: Message, bot: Bot, state: FSMContext):
-    await bot.send_message(
-        message.from_user.id,
-        'Ведите ограничение по коэффиценту'
-    )
-    await state.update_data(amount=message.text)
-    await state.set_state(FreebetDataState.GET_FREEBET_COEFF)
+    try:
+        await state.update_data(amount=int(message.text))
+        await state.set_state(FreebetDataState.GET_FREEBET_COEFF)
+        await bot.send_message(
+            message.from_user.id,
+            'Введите ограничение по коэффиценту, если фрибет без ограничений, то напишите нет'
+        )
+    except Exception:
+        await bot.send_message(message.from_user.id,'Введите целочисленное значение')
 
 async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
-    context = await state.get_data()
+    try:
+        context = await state.get_data()
+        max_coeff = float(message.text) if message.text.lower() != 'нет' else 1000
+        await bot.send_message(
+            message.from_user.id,
+            'Ищу вилку подходящую вашим параметрам\n\n'
+            f'Выбранный букмекер: {context['booker'][0] + context["booker"].split('_')[0][1:].lower()}\n\n'
+            f'Номинал фрибета: {context['amount']}\n\n'
+            f'Ограничение по коэффиценту: {max_coeff}' 
+        )
+        forks = get_freebet_forks(context['booker'], float(max_coeff), int(context['amount']))
+        fork = forks[0]
+        response = generate_freebet_fork_message(fork, int(context['amount']), context['booker'])
+        await state.clear()
+        await bot.send_message(message.from_user.id, response, reply_markup=keyboards.freebet_fork_keyboard(index=0,lenght=len(forks),bookers=context['booker'],freebet=int(context['amount']),max_coeff=float(max_coeff)))
+    except IndexError:
+        await bot.send_message(message.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
+    except Exception as e:
+        print(e)
+        await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
+
+async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
+    await callback.message.delete()
+    index = int(callback.data.split('_')[-3]) 
+    bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
+    forks = get_freebet_forks(bookers,float(callback.data.split('_')[-5]),int(callback.data.split('_')[-4]))
+    print(callback.data)
+    fork = forks[index]
+    responce = generate_freebet_fork_message(fork,freebet=int(callback.data.split('_')[-4]),booker=bookers)
     await bot.send_message(
-        message.from_user.id,
-        'Ищу вилку подходящую вашим параметрам\n\n'
-        f'Выбранный букмекер: {context['booker'][0] + context["booker"].split('_')[0][1:].lower()}\n\n'
-        f'Номинал фрибета: {context['amount']}\n\n'
-        f'Ограничение по коэффиценту: {message.text}' 
-    )
-    forks = get_freebet_forks(context['booker'], float(message.text))
-    fork = forks[0]
-    response = generate_freebet_fork_message(fork, int(context['amount']), context['booker'])
-    await bot.send_message(message.from_user.id, response)
+        callback.from_user.id, 
+        responce, 
+        reply_markup=keyboards.freebet_fork_keyboard(
+        index=index,
+        lenght=len(forks),
+        bookers=bookers,
+        max_coeff=float(callback.data.split('_')[-5]),
+        freebet=int(callback.data.split('_')[-4])
+        ))

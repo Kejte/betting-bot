@@ -13,6 +13,8 @@ def get_cached_fork_data(bookers):
     forks = redis_client.lrange(bookers,0,-1)
     deserialized_forks  = [json.loads(fork.decode('utf-8')) for fork in forks]
     return deserialized_forks
-    
+
+
+
 
     

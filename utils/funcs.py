@@ -41,16 +41,19 @@ def calculate_freebet_profit(fork: dict, freebet:int):
     percents = garanted_profit/(freebet/100)
     return money_bet,garanted_profit,percents
 
-def get_freebet_forks(bookers: str, max_coeff: float):
-    forks = get_cached_fork_data(bookers)
-    if not forks:
-        module = importlib.import_module('core.constants')
-        url = getattr(module,bookers)
-        forks = parse_fork(url)
-        cache_forks(forks, bookers)
-    booker = bookers.split('_')[0].lower()
-    forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 2.05 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 2.05 and float(fork['coef_on_second_booker']) <= max_coeff)] 
-    return forks 
+def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
+    freebet_forks = get_cached_fork_data(f'FREEBET_{bookers.split('_')[0]}_{max_coeff}')
+    if not freebet_forks:
+        forks = get_cached_fork_data(bookers)
+        if not forks:
+            module = importlib.import_module('core.constants')
+            url = getattr(module,bookers)
+            forks = parse_fork(url)
+            cache_forks(forks, bookers)
+        booker = bookers.split('_')[0].lower()
+        forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 2.05 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 2.05 and float(fork['coef_on_second_booker']) <= max_coeff)] 
+        forks = sorted(forks, key=lambda fork: calculate_freebet_profit(fork,freebet), reverse=True)
+        cache_forks(forks, f'FREEBET_{bookers.split('_')[0]}_{max_coeff}')
+        return forks
+    return freebet_forks
 
-def sort_freebet_forks(forks, freebet):
-    ...
