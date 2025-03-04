@@ -7,6 +7,8 @@ def hello_keyboard() -> InlineKeyboardMarkup:
     
     builder.button(text='Найти денежную вилку', callback_data='search_money_fork')
     builder.button(text='Найти фрибетную вилку', callback_data='search_freebet_fork')
+    builder.button(text='Тариффы', callback_data='tariffs')
+    builder.button(text='Обратная связь', callback_data='feedback')
     
     builder.adjust(1)
 
@@ -17,6 +19,8 @@ def bookers_list_keyboard(fork_type: str) -> InlineKeyboardMarkup:
 
     for booker in BOOKERS_LIST:
         builder.button(text=booker, callback_data=f'required_{fork_type}_{booker}')
+    
+    builder.button(text='Назад в меню', callback_data='main_menu')
     
     builder.adjust(1)
 
@@ -70,6 +74,15 @@ def money_fork_calculating_keyboard(first_booker: str, first_coef: float, second
     builder = InlineKeyboardBuilder()
 
     builder.button(text='Пересчитать',callback_data=f'calculate_money_fork_{first_booker}_{first_coef}_{second_booker}_{second_coef}_{profit}')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def cancel_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Назад в меню', callback_data='main_menu')
 
     builder.adjust(1)
 

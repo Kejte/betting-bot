@@ -51,7 +51,10 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
             forks = parse_fork(url)
             cache_forks(forks, bookers)
         booker = bookers.split('_')[0].lower()
-        forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 2.05 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 2.05 and float(fork['coef_on_second_booker']) <= max_coeff)] 
+        if not 'olimp' in bookers.split('_')[0].lower():
+            forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 2.05 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 2.05 and float(fork['coef_on_second_booker']) <= max_coeff)] 
+        else:
+            forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 1.6 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 1.6 and float(fork['coef_on_second_booker']) <= max_coeff)] 
         forks = sorted(forks, key=lambda fork: calculate_freebet_profit(fork,freebet), reverse=True)
         cache_forks(forks, f'FREEBET_{bookers.split('_')[0]}_{max_coeff}')
         return forks

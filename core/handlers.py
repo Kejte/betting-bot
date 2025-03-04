@@ -9,7 +9,13 @@ from utils.caching import cache_forks, get_cached_fork_data
 from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message
 
 async def hello_message(callback: Message, bot: Bot):
-    await bot.send_message(callback.from_user.id,'Здарова заебал', reply_markup=keyboards.hello_keyboard())
+    await bot.send_message(
+        callback.from_user.id,
+        'Привет!\n\n'
+        'Я бот по поиску букмекерских вилок. С моей помощью ты можешь найти вилки для отыгрыша баланса и твоих фрибетов.\n\n'
+        'Для новых пользователей доступен пробный период, для оплаты подписки перейди по кнопке тариффы', 
+        reply_markup=keyboards.hello_keyboard()
+        )
 
 async def required_bookers_list(callback: CallbackQuery, bot: Bot):
     await callback.message.delete()
@@ -46,6 +52,7 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
         fork = forks[0]
     except IndexError:
         await bot.send_message(callback.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
+        return
     responce = generate_fork_message(fork)
     await bot.send_message(
         callback.from_user.id, 
@@ -131,7 +138,8 @@ async def get_freebet_amount(callback: CallbackQuery, bot: Bot, state: FSMContex
     await state.set_state(FreebetDataState.GET_FREEBET_AMOUNT)
     await bot.send_message(
         callback.from_user.id,
-        'Введите номинал фрибета'
+        'Введите номинал фрибета',
+        reply_markup=keyboards.cancel_keyboard()
     )
     await state.update_data(booker=booker)
 
@@ -141,7 +149,8 @@ async def get_freebet_coef(message: Message, bot: Bot, state: FSMContext):
         await state.set_state(FreebetDataState.GET_FREEBET_COEFF)
         await bot.send_message(
             message.from_user.id,
-            'Введите ограничение по коэффиценту, если фрибет без ограничений, то напишите нет'
+            'Введите ограничение по коэффиценту, если фрибет без ограничений, то напишите нет',
+            reply_markup=keyboards.cancel_keyboard()
         )
     except Exception:
         await bot.send_message(message.from_user.id,'Введите целочисленное значение')
@@ -149,7 +158,7 @@ async def get_freebet_coef(message: Message, bot: Bot, state: FSMContext):
 async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
     try:
         context = await state.get_data()
-        max_coeff = float(message.text) if message.text.lower() != 'нет' else 1000
+        max_coeff = float(message.text) if message.text.lower() != 'нет' else 10
         await bot.send_message(
             message.from_user.id,
             'Ищу вилку подходящую вашим параметрам\n\n'
@@ -165,7 +174,6 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
     except IndexError:
         await bot.send_message(message.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
     except Exception as e:
-        print(e)
         await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
 
 async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
@@ -185,3 +193,6 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
         max_coeff=float(callback.data.split('_')[-5]),
         freebet=int(callback.data.split('_')[-4])
         ))
+
+async def feedback(callback: CallbackQuery, bot: Bot):
+    await ...
