@@ -1,9 +1,6 @@
-input
 .env
 
-#media and txt dirs
-archive
-
+db.sqlite3
 
 #cached files
 __pycache__

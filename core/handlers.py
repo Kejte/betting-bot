@@ -8,16 +8,22 @@ import importlib
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message
 
-async def hello_message(callback: Message, bot: Bot):
+async def hello_message(callback: CallbackQuery, bot: Bot):
+    try:
+        await callback.message.delete()
+        await bot.answer_callback_query(callback.id)
+    except AttributeError:
+        ...
     await bot.send_message(
         callback.from_user.id,
         'Привет!\n\n'
         'Я бот по поиску букмекерских вилок. С моей помощью ты можешь найти вилки для отыгрыша баланса и твоих фрибетов.\n\n'
-        'Для новых пользователей доступен пробный период, для оплаты подписки перейди по кнопке тариффы', 
+        'Для новых пользователей доступен пробный период, для оплаты подписки перейди по кнопке тарифы', 
         reply_markup=keyboards.hello_keyboard()
         )
 
 async def required_bookers_list(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id, 
@@ -25,6 +31,7 @@ async def required_bookers_list(callback: CallbackQuery, bot: Bot):
         reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
 
 async def optional_bookers_list(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id, 
@@ -33,6 +40,7 @@ async def optional_bookers_list(callback: CallbackQuery, bot: Bot):
         reply_markup=keyboards.optional_bookers_list_keyboard(callback.data.split('_')[1],callback.data.split('_')[-1]))    
 
 async def search_fork(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     second_booker = callback.data.split('_')[-1] if callback.data.split('_')[-1] != 'any' else 'Любая бк' 
     await bot.send_message(
@@ -69,6 +77,7 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
         ))
 
 async def paginate_forks(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     index = int(callback.data.split('_')[-3]) 
     bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
@@ -95,6 +104,7 @@ async def paginate_forks(callback: CallbackQuery, bot: Bot):
         ))
 
 async def pre_calculate_fork(callback: CallbackQuery, bot: Bot, state: FSMContext):
+    await bot.answer_callback_query(callback.id)
     await callback.message.answer('Введите сумму вилки')
     await state.set_state(CalculateMoneyForkState.GET_AMOUNT)
     data = callback.data.split('_')
@@ -127,6 +137,7 @@ async def calculate_fork(message: Message, bot: Bot, state: FSMContext):
     await state.clear()
 
 async def choice_freebet_booker(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id, 
@@ -134,6 +145,7 @@ async def choice_freebet_booker(callback: CallbackQuery, bot: Bot):
         reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
     
 async def get_freebet_amount(callback: CallbackQuery, bot: Bot, state: FSMContext):
+    await bot.answer_callback_query(callback.id)
     booker = callback.data.split('_')[-1].upper() + '_ANY'
     await state.set_state(FreebetDataState.GET_FREEBET_AMOUNT)
     await bot.send_message(
@@ -177,6 +189,7 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
         await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
 
 async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     index = int(callback.data.split('_')[-3]) 
     bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
