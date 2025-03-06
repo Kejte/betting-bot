@@ -16,7 +16,8 @@ def generate_fork_message(fork: dict):
 def generate_freebet_fork_message(fork: dict, freebet: int, booker: str):
     money_bet, garanted_profit,percents = calculate_freebet_profit(fork, freebet)
     booker = booker.split('_')[0].lower()
-    if fork['first_booker'].lower() == booker:
+    print(fork['first_booker'].lower())
+    if booker in fork['first_booker'].lower():
         freebet_bet = f'Событие для фрибета: {fork['bet_on_first_booker']} коэффицент - {fork['coef_on_first_booker'] } ({fork['first_booker']})\n\n'
         fork_bet = f'Противоположная ставка: {fork['bet_on_second_booker']} коэффицент - {fork['coef_on_second_booker']} (){fork['second_booker']}\n\n'
     else:
@@ -43,6 +44,7 @@ def calculate_freebet_profit(fork: dict, freebet:int):
 
 def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
     freebet_forks = get_cached_fork_data(f'FREEBET_{bookers.split('_')[0]}_{max_coeff}')
+    print(bookers)
     if not freebet_forks:
         forks = get_cached_fork_data(bookers)
         if not forks:
@@ -51,6 +53,7 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
             forks = parse_fork(url)
             cache_forks(forks, bookers)
         booker = bookers.split('_')[0].lower()
+        print(booker)
         if not 'olimp' in bookers.split('_')[0].lower():
             forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 2.05 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 2.05 and float(fork['coef_on_second_booker']) <= max_coeff)] 
         else:
