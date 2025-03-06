@@ -3,7 +3,7 @@ input
 
 #media and txt dirs
 archive
-*.txt
+
 
 #cached files
 __pycache__
