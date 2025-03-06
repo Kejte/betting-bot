@@ -16,7 +16,6 @@ def generate_fork_message(fork: dict):
 def generate_freebet_fork_message(fork: dict, freebet: int, booker: str):
     money_bet, garanted_profit,percents = calculate_freebet_profit(fork, freebet)
     booker = booker.split('_')[0].lower()
-    print(fork['first_booker'].lower())
     if booker in fork['first_booker'].lower():
         freebet_bet = f'Событие для фрибета: {fork['bet_on_first_booker']} коэффицент - {fork['coef_on_first_booker'] } ({fork['first_booker']})\n\n'
         fork_bet = f'Противоположная ставка: {fork['bet_on_second_booker']} коэффицент - {fork['coef_on_second_booker']} (){fork['second_booker']}\n\n'
