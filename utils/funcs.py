@@ -35,15 +35,24 @@ def generate_freebet_fork_message(fork: dict, freebet: int, booker: str):
                f'Прибыль: {round(garanted_profit,2)} Руб.')
 
 def calculate_freebet_profit(fork: dict, freebet:int):
-    profit_on_freebet_bet = freebet * (max(float(fork['coef_on_first_booker']),float(fork['coef_on_second_booker']))-1)
-    money_bet = profit_on_freebet_bet / min(float(fork['coef_on_first_booker']),float(fork['coef_on_second_booker']))
-    garanted_profit = profit_on_freebet_bet - money_bet
-    percents = garanted_profit/(freebet/100)
+    if ('olimp' not in fork['first_booker'].lower()) and ('olimp' not in fork['second_booker'].lower()):
+        profit_on_freebet_bet = freebet * (max(float(fork['coef_on_first_booker']),float(fork['coef_on_second_booker']))-1)
+        money_bet = profit_on_freebet_bet / min(float(fork['coef_on_first_booker']),float(fork['coef_on_second_booker']))
+        garanted_profit = profit_on_freebet_bet - money_bet
+        percents = garanted_profit/(freebet/100)
+    else:
+        if 'olimp' in fork['first_booker']:
+            profit_on_freebet_bet = freebet * (fork['coef_on_first_booker']-1)
+            money_bet = profit_on_freebet_bet / fork['coef_on_second_booker']
+        else:
+            profit_on_freebet_bet = freebet * (fork['coef_on_second_booker']-1)
+            money_bet = profit_on_freebet_bet / fork['coef_on_first_booker']
+        garanted_profit = profit_on_freebet_bet - money_bet
+        percents = garanted_profit/(freebet/100)
     return money_bet,garanted_profit,percents
 
 def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
     freebet_forks = get_cached_fork_data(f'FREEBET_{bookers.split('_')[0]}_{max_coeff}')
-    print(bookers)
     if not freebet_forks:
         forks = get_cached_fork_data(bookers)
         if not forks:
