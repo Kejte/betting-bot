@@ -186,6 +186,7 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
     except IndexError:
         await bot.send_message(message.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
     except Exception as e:
+        print(e)
         await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
 
 async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
