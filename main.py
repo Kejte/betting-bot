@@ -8,6 +8,7 @@ from aiogram.filters import Command
 from utils.commands import set_commands
 from aiogram.client.default import DefaultBotProperties
 from utils import states
+from core.middlewares import RegisterMiddleware
 
 
 async def start_bot(bot: Bot):
@@ -28,8 +29,8 @@ async def load_bot():
     # STAFF handlers
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
-    # dp.message.middleware.register(RegisterMiddleware())
-    # dp.callback_query.middleware.register(RegisterMiddleware())
+    dp.message.middleware.register(RegisterMiddleware())
+    dp.callback_query.middleware.register(RegisterMiddleware())
 
     dp.message.register(handlers.hello_message, Command(commands='start'))
     dp.callback_query.register(handlers.hello_message,F.data=='main_menu')

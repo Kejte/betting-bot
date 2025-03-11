@@ -67,4 +67,4 @@ WINLINE_OLIMP=env.str('WINLINE_OLIMP')
 OLIMP_LIGASTAVOK=env.str('OLIMP_LIGASTAVOK')
 OLIMP_MARATHON=env.str('OLIMP_MARATHON')
 
-database_url = 'sqlite+aiosqlite:///data/db.sqlite3'
+REGISTRY_PROFILE_URL=env.str('REGISTRY_PROFILE_URL')
