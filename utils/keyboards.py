@@ -87,3 +87,13 @@ def cancel_keyboard():
     builder.adjust(1)
 
     return builder.as_markup()
+
+def tariffs_keyboard(tariffs: list[dict]):
+    builder = InlineKeyboardBuilder()
+    
+    for tariff in tariffs:
+        builder.button(text=tariff['title'], callback_data=f'tariff_{tariff['id']}')
+    
+    builder.adjust(1)
+
+    return builder.as_markup()

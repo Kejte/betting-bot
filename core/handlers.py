@@ -210,3 +210,6 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
 
 async def feedback(callback: CallbackQuery, bot: Bot):
     await ...
+
+async def tariffs(callback: CallbackQuery, bot: Bot):
+    ...

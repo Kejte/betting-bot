@@ -1,6 +1,8 @@
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.parser import parse_fork
 import importlib
+from core.constants import TARIFFS_URL, SECRET_KEY
+import requests
 
 def generate_fork_message(fork: dict):
     return    (f'Событие: {fork['event']}\n\n'  
@@ -70,3 +72,5 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
         return forks
     return freebet_forks
 
+def get_tariffs():
+    return requests.get(TARIFFS_URL,headers={'Secret-Key': SECRET_KEY}).json()
