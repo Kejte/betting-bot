@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from utils.states import CalculateMoneyForkState, FreebetDataState
 import importlib
 from utils.caching import cache_forks, get_cached_fork_data
-from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message
+from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_tariffs, get_tariff
 
 async def hello_message(callback: CallbackQuery, bot: Bot):
     try:
@@ -211,5 +211,46 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
 async def feedback(callback: CallbackQuery, bot: Bot):
     await ...
 
-async def tariffs(callback: CallbackQuery, bot: Bot):
-    ...
+async def payments(callback: CallbackQuery, bot: Bot):
+    await callback.message.answer()
+    await callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id,
+        'Вы перешли на вкладку <<Настройка подписки>>\n\n'
+        'Здесь ты можешь посмотреть информацию о своей актуальной подписке, просмотреть существующие тарифы и историю своих платежей\n\n'
+        'Выбери действие:',
+        reply_markup=keyboards.payments_keyboard()
+
+    )
+
+async def tariffs_list(callback: CallbackQuery, bot: Bot):
+    await callback.message.answer()
+    await callback.message.delete()
+    tariffs = get_tariffs()
+    await bot.send_message(
+        callback.from_user.id,
+        'При выборе тарифа отправится сообщение с подробной информацией о конкретном тарифе\n\n'
+        'Список доступных тарифов:',
+        reply_markup=keyboards.tariffs_keyboard(tariffs)
+    )
+
+async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
+    await callback.message.answer()
+    await callback.message.delete()
+    tariff = get_tariff(callback.data.split('_')[-2])
+    cost_string = f'{tariff['cost']}\{tariff['duration']} дней' if tariff['duration'] > 5 else f'{tariff['cost']}\{tariff['duration']} дня'
+    await bot.send_message(
+        callback.from_user.id,
+        f'Тариф {callback.data.split('_')[-1]}\n\n'
+        f'{tariff['description']}\n\n'
+        f'_{cost_string}_',
+        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2])),
+        parse_mode="Markdown"
+    )
+
+async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
+    await callback.message.answer()
+    await callback.message.delete()
+    subscribe = ...
+
+

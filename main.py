@@ -45,6 +45,9 @@ async def load_bot():
     dp.message.register(handlers.calculate_fork, states.CalculateMoneyForkState.GET_AMOUNT)
     dp.message.register(handlers.get_freebet_coef, states.FreebetDataState.GET_FREEBET_AMOUNT)
     dp.message.register(handlers.freebet_forks, states.FreebetDataState.GET_FREEBET_COEFF)
+    dp.callback_query.register(handlers.payments, F.data == 'payments')
+    dp.callback_query.register(handlers.tariffs_list, F.data == 'tariffs')
+    dp.callback_query.register(handlers.retrieve_tariff, F.data.startswith('tariff_'))
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)
