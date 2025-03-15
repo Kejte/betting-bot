@@ -7,7 +7,7 @@ def hello_keyboard() -> InlineKeyboardMarkup:
     
     builder.button(text='Найти денежную вилку', callback_data='search_money_fork')
     builder.button(text='Найти фрибетную вилку', callback_data='search_freebet_fork')
-    builder.button(text='Тарифы', callback_data='tariffs')
+    builder.button(text='Настройки подписки', callback_data='payments')
     builder.button(text='Обратная связь', callback_data='feedback')
     
     builder.adjust(1)
@@ -82,6 +82,41 @@ def money_fork_calculating_keyboard(first_booker: str, first_coef: float, second
 def cancel_keyboard():
     builder = InlineKeyboardBuilder()
 
+    builder.button(text='Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def tariffs_keyboard(tariffs: list[dict]):
+    builder = InlineKeyboardBuilder()
+    
+    for tariff in tariffs:
+        builder.button(text=tariff['title'], callback_data=f'tariff_{tariff['id']}_{tariff['title']}')
+    
+    builder.button(text='Назад в меню', callback_data='main_menu')
+    
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def payments_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Моя подпискa', callback_data='actual_subscribe')
+    builder.button(text='Тарифы', callback_data='tariffs')
+    builder.button(text='История платежей', callback_data='payment_history')
+    builder.button(text='Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def tariff_keyboard(id: int):
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Купить', callback_data='purchase_tariff')
+    builder.button(text='Назад к тарифам', callback_data='tariffs')
     builder.button(text='Назад в меню', callback_data='main_menu')
 
     builder.adjust(1)

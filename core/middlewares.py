@@ -17,11 +17,16 @@ class RegisterMiddleware(BaseMiddleware):
         profile_exists = requests.get(REGISTRY_PROFILE_URL + str(event.from_user.id), headers={'Secret-Key': SECRET_KEY})
         if profile_exists.status_code == 400:
             json = {
-                'tg_id': str(event.from_user.id)
+                'tg_id': str(event.from_user.id),
+                'username': '@'+str(event.from_user.username)
             }
             requests.post(
                 CREATE_PROFILE_URL,
                 json=json,
                 headers={'Secret-Key': SECRET_KEY}
             )
+        if profile_exists.json['username'][1:] != event.from_user.username:
+            json = {
+                'username': '@' + str(event.from_user.username)
+            }
         return await handler(event, data)

@@ -70,3 +70,6 @@ OLIMP_MARATHON=env.str('OLIMP_MARATHON')
 REGISTRY_PROFILE_URL=env.str('REGISTRY_PROFILE_URL')
 CREATE_PROFILE_URL=env.str('CREATE_PROFILE_URL')
 SECRET_KEY=env.str('SECRET_KEY')
+TARIFFS_URL=env.str('TARIFFS_URL')
+TARIFF_URL=env.str('TARIFF_URL') #Дописать логику ретрива тарифа и добавить эндпоинт в .env
+# SUBSCRIPTION_URL=env.str('SUBSCRIPTION_URL') #Дописать логику подписок и добавить эндпоинт в .env

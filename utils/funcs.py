@@ -1,6 +1,8 @@
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.parser import parse_fork
 import importlib
+from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL #SUBSCRIPTION_URL
+import requests
 
 def generate_fork_message(fork: dict):
     return    (f'Событие: {fork['event']}\n\n'  
@@ -41,7 +43,7 @@ def calculate_freebet_profit(fork: dict, freebet:int, booker: str):
         garanted_profit = profit_on_freebet_bet - money_bet
         percents = garanted_profit/(freebet/100)
     else:
-        if 'olimp' in fork['first_booker']:
+        if 'olimp' in fork['first_booker'].lower():
             profit_on_freebet_bet = freebet * (float(fork['coef_on_first_booker'])-1)
             money_bet = profit_on_freebet_bet / float(fork['coef_on_second_booker'])
         else:
@@ -70,3 +72,11 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int):
         return forks
     return freebet_forks
 
+def get_tariffs():
+    return requests.get(TARIFFS_URL,headers={'Secret-Key': SECRET_KEY}).json()
+
+def get_tariff(id: int):
+    return requests.get(TARIFF_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()
+
+# def get_subscribe(tg_id: int):
+#     return requests.get(SUBSCRIPTION_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()
