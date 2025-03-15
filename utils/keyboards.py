@@ -94,7 +94,7 @@ def tariffs_keyboard(tariffs: list[dict]):
     for tariff in tariffs:
         builder.button(text=tariff['title'], callback_data=f'tariff_{tariff['id']}_{tariff['title']}')
     
-    builder.button('Назад в меню', callback_data='main_menu')
+    builder.button(text='Назад в меню', callback_data='main_menu')
     
     builder.adjust(1)
 

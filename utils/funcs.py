@@ -1,7 +1,7 @@
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.parser import parse_fork
 import importlib
-from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL, SUBSCRIPTION_URL
+from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL #SUBSCRIPTION_URL
 import requests
 
 def generate_fork_message(fork: dict):
@@ -78,5 +78,5 @@ def get_tariffs():
 def get_tariff(id: int):
     return requests.get(TARIFF_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()
 
-def get_subscribe(tg_id: int):
-    return requests.get(SUBSCRIPTION_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()
+# def get_subscribe(tg_id: int):
+#     return requests.get(SUBSCRIPTION_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()

@@ -17,8 +17,7 @@ async def hello_message(callback: CallbackQuery, bot: Bot):
     await bot.send_message(
         callback.from_user.id,
         'Привет!\n\n'
-        'Я бот по поиску букмекерских вилок. С моей помощью ты можешь найти вилки для отыгрыша баланса и твоих фрибетов.\n\n'
-        'Для новых пользователей доступен пробный период, для оплаты подписки перейди по кнопке тарифы', 
+        'Я бот по поиску букмекерских вилок. С моей помощью ты можешь найти вилки для отыгрыша баланса и твоих фрибетов.\n\n', 
         reply_markup=keyboards.hello_keyboard()
         )
 
@@ -212,19 +211,21 @@ async def feedback(callback: CallbackQuery, bot: Bot):
     await ...
 
 async def payments(callback: CallbackQuery, bot: Bot):
-    await callback.message.answer()
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id,
-        'Вы перешли на вкладку <<Настройка подписки>>\n\n'
+        'Вы перешли на вкладку *Настройка подписки\n\n*'
         'Здесь ты можешь посмотреть информацию о своей актуальной подписке, просмотреть существующие тарифы и историю своих платежей\n\n'
+        'Для новых пользователей доступен пробный период, чтобы его активировать перейди по кнопке тарифы\n\n'
         'Выбери действие:',
+        parse_mode='Markdown',
         reply_markup=keyboards.payments_keyboard()
 
     )
 
 async def tariffs_list(callback: CallbackQuery, bot: Bot):
-    await callback.message.answer()
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     tariffs = get_tariffs()
     await bot.send_message(
@@ -235,21 +236,21 @@ async def tariffs_list(callback: CallbackQuery, bot: Bot):
     )
 
 async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
-    await callback.message.answer()
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     tariff = get_tariff(callback.data.split('_')[-2])
-    cost_string = f'{tariff['cost']}\{tariff['duration']} дней' if tariff['duration'] > 5 else f'{tariff['cost']}\{tariff['duration']} дня'
+    cost_string = f'{tariff['cost']} руб. / {tariff['duration']} дней' if tariff['duration'] > 5 else f'{tariff['cost']} / {tariff['duration']} дня'
     await bot.send_message(
         callback.from_user.id,
         f'Тариф {callback.data.split('_')[-1]}\n\n'
         f'{tariff['description']}\n\n'
-        f'_{cost_string}_',
+        f'*{cost_string}*',
         reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2])),
         parse_mode="Markdown"
     )
 
 async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
-    await callback.message.answer()
+    await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     subscribe = ...
 
