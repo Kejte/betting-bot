@@ -25,7 +25,7 @@ class RegisterMiddleware(BaseMiddleware):
                 json=json,
                 headers={'Secret-Key': SECRET_KEY}
             )
-        if profile_exists.json['username'][1:] != event.from_user.username:
+        if profile_exists.json()['username'][1:] != event.from_user.username:
             json = {
                 'username': '@' + str(event.from_user.username)
             }
