@@ -208,7 +208,16 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
         ))
 
 async def feedback(callback: CallbackQuery, bot: Bot):
-    await ...
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id,
+        'Вы перешли на вкладку *Обратная связь*\n\n'
+        'Здесь вы можете обратиться за помощью в тех.поддержку или поделиться своей идеей для усовершенствования бота\n\n'
+        'Выберите действие:',
+        reply_markup=keyboards.feedback_keyboard(),
+        parse_mode='Markdown'
+    )
 
 async def payments(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
@@ -247,6 +256,15 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
         f'*{cost_string}*',
         reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2])),
         parse_mode="Markdown"
+    )
+
+async def tech_support(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id,
+        'Пожалуйста, опишите свою проблему',
+        keyboards
     )
 
 async def retrieve_subcription(callback: CallbackQuery, bot: Bot):

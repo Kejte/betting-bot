@@ -122,3 +122,14 @@ def tariff_keyboard(id: int):
     builder.adjust(1)
 
     return builder.as_markup()
+
+def feedback_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Тех.поддержка', callback_data='tech_support')
+    builder.button(text='Предложить обновление', callback_data='update_ticket')
+    builder.button(text='Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
