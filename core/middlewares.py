@@ -15,24 +15,26 @@ class RegisterMiddleware(BaseMiddleware):
         data: Dict[str, Any]
     ) -> Any:
         profile_exists = requests.get(REGISTRY_PROFILE_URL + str(event.from_user.id), headers={'Secret-Key': SECRET_KEY})
-        if profile_exists.status_code == 400:
-            json = {
-                'tg_id': str(event.from_user.id),
-                'username': '@'+str(event.from_user.username)
-            }
-            requests.post(
-                CREATE_PROFILE_URL,
-                json=json,
-                headers={'Secret-Key': SECRET_KEY}
-            )
-        elif profile_exists.json()['username'][1:] != event.from_user.username:
-            json = {
-                'username': '@' + str(event.from_user.username),
-                'tg_id': event.from_user.id
-            }
-            req = requests.put(
-                UPDATE_PROFILE_URL + str(event.from_user.id),
-                json=json,
-                headers={'Secret-Key': SECRET_KEY}
-            )
+        match profile_exists.status_code:
+            case 400:
+                json = {
+                    'tg_id': str(event.from_user.id),
+                    'username': '@'+str(event.from_user.username)
+                }
+                requests.post(
+                    CREATE_PROFILE_URL,
+                    json=json,
+                    headers={'Secret-Key': SECRET_KEY}
+                )
+            case 200:
+                if profile_exists.json()['username'][1:] != event.from_user.username:
+                    json = {
+                        'username': '@' + str(event.from_user.username),
+                        'tg_id': event.from_user.id
+                    }
+                    req = requests.put(
+                        UPDATE_PROFILE_URL + str(event.from_user.id),
+                        json=json,
+                        headers={'Secret-Key': SECRET_KEY}
+                    )
         return await handler(event, data)
