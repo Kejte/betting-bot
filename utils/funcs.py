@@ -1,7 +1,7 @@
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.parser import parse_fork
 import importlib
-from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL #SUBSCRIPTION_URL
+from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL, CREATE_TECH_SUPPORT_TICKET_URL, CREATE_UPDATE_TICKET_URL, GET_UPDATE_LOG_URL #SUBSCRIPTION_URL
 import requests
 
 def generate_fork_message(fork: dict):
@@ -77,6 +77,31 @@ def get_tariffs():
 
 def get_tariff(id: int):
     return requests.get(TARIFF_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()
+
+def create_tech_support_ticket(text: str, tg_id: int):
+    json = {
+        'profile': tg_id,
+        'text': text
+    }
+    requests.post(
+        CREATE_TECH_SUPPORT_TICKET_URL,
+        json=json,
+        headers={'Secret-Key': SECRET_KEY}
+    )
+
+def create_update_support_ticket(text: str, tg_id: int):
+    json = {
+        'profile': tg_id,
+        'text': text
+    }
+    req = requests.post(
+        CREATE_UPDATE_TICKET_URL,
+        json=json,
+        headers={'Secret-Key': SECRET_KEY}
+    )
+
+def get_update_log():
+    return requests.get(GET_UPDATE_LOG_URL,headers={'Secret-Key': SECRET_KEY}).json()
 
 # def get_subscribe(tg_id: int):
 #     return requests.get(SUBSCRIPTION_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()

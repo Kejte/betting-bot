@@ -9,6 +9,7 @@ def hello_keyboard() -> InlineKeyboardMarkup:
     builder.button(text='Найти фрибетную вилку', callback_data='search_freebet_fork')
     builder.button(text='Настройки подписки', callback_data='payments')
     builder.button(text='Обратная связь', callback_data='feedback')
+    builder.button(text='Что нового?', callback_data='update_log')
     
     builder.adjust(1)
 

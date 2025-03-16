@@ -48,6 +48,12 @@ async def load_bot():
     dp.callback_query.register(handlers.payments, F.data == 'payments')
     dp.callback_query.register(handlers.tariffs_list, F.data == 'tariffs')
     dp.callback_query.register(handlers.retrieve_tariff, F.data.startswith('tariff_'))
+    dp.callback_query.register(handlers.feedback, F.data == 'feedback')
+    dp.callback_query.register(handlers.tech_support, F.data == 'tech_support')
+    dp.message.register(handlers.create_tech_support_report, states.TechSupportState.GET_TEXT)
+    dp.callback_query.register(handlers.update_ticket, F.data == 'update_ticket')
+    dp.message.register(handlers.create_update_ticket, states.UpdateTicketState.GET_TICKET_TEXT)
+    dp.callback_query.register(handlers.update_log, F.data == 'update_log')
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)

@@ -3,10 +3,11 @@ from aiogram.types import CallbackQuery, Message
 from utils import keyboards
 from utils.parser import parse_fork
 from aiogram.fsm.context import FSMContext
-from utils.states import CalculateMoneyForkState, FreebetDataState
+from utils.states import CalculateMoneyForkState, FreebetDataState, TechSupportState, UpdateTicketState
 import importlib
 from utils.caching import cache_forks, get_cached_fork_data
-from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_tariffs, get_tariff
+from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log
+from core.constants import MANAGER
 
 async def hello_message(callback: CallbackQuery, bot: Bot):
     try:
@@ -258,18 +259,64 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
         parse_mode="Markdown"
     )
 
-async def tech_support(callback: CallbackQuery, bot: Bot):
+async def tech_support(callback: CallbackQuery, bot: Bot, state: FSMContext):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id,
         'Пожалуйста, опишите свою проблему',
-        keyboards
+        reply_markup=keyboards.cancel_keyboard()
     )
+    await state.set_state(TechSupportState.GET_TEXT)
+
+async def create_tech_support_report(message: Message, bot: Bot, state: FSMContext):
+    await state.clear()
+    await bot.send_message(
+        message.from_user.id,
+        'Ваше обращение передано в тех.поддержку, в скором времени с вами свяжутся через телеграмм, приносим извинения за неудобства',
+        reply_markup=keyboards.cancel_keyboard()
+        )
+    create_tech_support_ticket(message.text, message.from_user.id)
+    await bot.send_message(
+        MANAGER,
+        f'Новое обращение в техническую поддержку!\n\n'
+        f'Пользователь @{message.from_user.username}\n\n'
+        f'{message.text}'
+    )
+
+async def update_ticket(callback: CallbackQuery, bot: Bot, state: FSMContext):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id,
+        'Опишите своё предложение',
+        reply_markup=keyboards.cancel_keyboard()
+    )
+    await state.set_state(UpdateTicketState.GET_TICKET_TEXT)
+
+async def create_update_ticket(message: Message, bot: Bot, state: FSMContext):
+    await state.clear()
+    create_update_support_ticket(message.text,message.from_user.id)
+    await bot.send_message(
+        message.from_user.id,
+        'Ваше предложение принято на заметку, спасибо за участие в развитии проекта!',
+        reply_markup=keyboards.cancel_keyboard()
+        )
 
 async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     subscribe = ...
+
+async def update_log(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    data = get_update_log()
+    await bot.send_message(
+        callback.from_user.id,
+        f'Обновление от {data['created_at']}\n\n'
+        f'{data['text']}',
+        reply_markup=keyboards.cancel_keyboard()
+    )
 
 
