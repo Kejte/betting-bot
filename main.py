@@ -23,6 +23,7 @@ async def load_bot():
                         format='%(asctime)s - [%(levelname)s] - %(name)s -'''
                                '(%(filename)s).%(funcName)s(%(lineno)d) - %(message)s'
                         )
+    
     bot = Bot(token=settings.bots.bot_token, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher()
 
