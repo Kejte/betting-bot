@@ -8,6 +8,7 @@ import importlib
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log
 from core.constants import MANAGER
+from aiogram.types import FSInputFile
 
 async def hello_message(callback: CallbackQuery, bot: Bot):
     try:
@@ -319,4 +320,12 @@ async def update_log(callback: CallbackQuery, bot: Bot):
         reply_markup=keyboards.cancel_keyboard()
     )
 
+async def public_offer(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    await bot.send_document(
+            callback.from_user.id,
+            FSInputFile('files/public_offer.pdf'),
+            reply_markup=keyboards.cancel_keyboard()
+        )
 

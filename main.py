@@ -55,6 +55,7 @@ async def load_bot():
     dp.callback_query.register(handlers.update_ticket, F.data == 'update_ticket')
     dp.message.register(handlers.create_update_ticket, states.UpdateTicketState.GET_TICKET_TEXT)
     dp.callback_query.register(handlers.update_log, F.data == 'update_log')
+    dp.callback_query.register(handlers.public_offer, F.data == 'public_offer')
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)

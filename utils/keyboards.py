@@ -8,6 +8,7 @@ def hello_keyboard() -> InlineKeyboardMarkup:
     builder.button(text='Найти денежную вилку', callback_data='search_money_fork')
     builder.button(text='Найти фрибетную вилку', callback_data='search_freebet_fork')
     builder.button(text='Настройки подписки', callback_data='payments')
+    builder.button(text='Публичная оферта', callback_data='public_offer')
     builder.button(text='Обратная связь', callback_data='feedback')
     builder.button(text='Что нового?', callback_data='update_log')
     
