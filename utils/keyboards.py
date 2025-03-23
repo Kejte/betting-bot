@@ -107,7 +107,6 @@ def payments_keyboard():
 
     builder.button(text='Моя подпискa', callback_data='actual_subscribe')
     builder.button(text='Тарифы', callback_data='tariffs')
-    builder.button(text='История платежей', callback_data='payment_history')
     builder.button(text='Назад в меню', callback_data='main_menu')
 
     builder.adjust(1)
@@ -118,6 +117,7 @@ def tariff_keyboard(id: int):
     builder = InlineKeyboardBuilder()
 
     builder.button(text='Купить', callback_data=f'purchase_tariff_{id}')
+    builder.button(text='Активировать пробный период', callback_data=f'activate_trial_{id}')
     builder.button(text='Назад к тарифам', callback_data='tariffs')
     builder.button(text='Назад в меню', callback_data='main_menu')
 
@@ -139,8 +139,18 @@ def feedback_keyboard():
 def purchase_request_keyboard(payment_id: int):
     builder = InlineKeyboardBuilder()
 
-    builder.button(text='Подтвердить оплату', callback_data=f'accept_payment_{payment_id}')
-    builder.button(text='Закрыть заявку', callback_data=f'cancel_payments_{payment_id}')
+    builder.button(text='Подтвердить оплату', callback_data=f'upd_payment_accept_{payment_id}')
+    builder.button(text='Закрыть заявку', callback_data=f'upd_payment_cancel_{payment_id}')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def back_to_payment_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Назад', callback_data='payments')
+    builder.button(text='Главное меню', callback_data='main_menu')
 
     builder.adjust(1)
 

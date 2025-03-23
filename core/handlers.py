@@ -4,7 +4,7 @@ from utils import keyboards
 
 from aiogram.fsm.context import FSMContext
 from utils.states import TechSupportState, UpdateTicketState
-from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff
+from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe
 from core.constants import MANAGER, GROUP_ID
 from aiogram.types import FSInputFile
 
@@ -120,7 +120,14 @@ async def create_update_ticket(message: Message, bot: Bot, state: FSMContext):
 async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    subscribe = ...
+    subscribe = get_subscribe(callback.from_user.id)
+    await bot.send_message(
+        callback.from_user.id,
+        f'Текущий тарифный план: {subscribe['tariff']}\n\n'
+        f'Осталось дней до конца подписки: {subscribe['remained_days']}\n\n'
+        f'Стоимость тарифа: {subscribe['cost']}',
+        reply_markup=keyboards.back_to_payment_keyboard()
+    )
 
 async def update_log(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
@@ -150,7 +157,7 @@ async def create_purchase_request(callback: CallbackQuery, bot: Bot):
         case False:
             await bot.send_message(
                 callback.from_user.id,
-                'У вас есть действующая подписка или вы уже оставили действующий запрос на покупку тарифного плана, во втором случае',
+                'У вас есть действующая подписка или вы уже оставили действующий запрос на покупку тарифного плана, во втором случае в скором времени с вами свяжется администратор',
                 reply_markup=keyboards.cancel_keyboard()
             )
         case _:
@@ -166,3 +173,41 @@ async def create_purchase_request(callback: CallbackQuery, bot: Bot):
                 message_thread_id=2,
                 reply_markup=keyboards.purchase_request_keyboard(payment_id=payment_id)
             )
+
+async def update_purchase_request(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    action = callback.data.split('_')[-2]
+    update_purchase_status(payment_id=callback.data.split('_')[-1], action=action)
+    match callback.data.split('_')[-2]:
+        case 'cancel':
+            await bot.send_message(
+                GROUP_ID,
+                f'Заявка №{callback.data.split('_')[-1]} была отклонена',
+                message_thread_id=29
+            )
+            tariffs = get_tariffs()
+            await bot.send_message(
+                callback.from_user.id,
+                f'По некоторым причинам ваша заявка на преобретение тарифа отклонена, создайте новую подписку или обратитесь в техническую поддержку.',
+                keyboards.tariffs_keyboard(tariffs=tariffs)
+            )
+        case 'accept':
+            await bot.send_message(
+                GROUP_ID,
+                f'Заявка №{callback.data.split('_')[-1]} была успешно принята',
+                message_thread_id=4
+            )
+            await bot.send_message(
+                callback.from_user.id,
+                f'Благодарим вас за покупку! Вам выдан доступ к боту в соответствии с вашим тарифным планом',
+                reply_markup=keyboards.hello_keyboard()
+            )
+            
+async def activate_trial_period(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    
+
+
+
