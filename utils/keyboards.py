@@ -117,7 +117,7 @@ def payments_keyboard():
 def tariff_keyboard(id: int):
     builder = InlineKeyboardBuilder()
 
-    builder.button(text='Купить', callback_data='purchase_tariff')
+    builder.button(text='Купить', callback_data=f'purchase_tariff_{id}')
     builder.button(text='Назад к тарифам', callback_data='tariffs')
     builder.button(text='Назад в меню', callback_data='main_menu')
 
@@ -131,6 +131,16 @@ def feedback_keyboard():
     builder.button(text='Тех.поддержка', callback_data='tech_support')
     builder.button(text='Предложить обновление', callback_data='update_ticket')
     builder.button(text='Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def purchase_request_keyboard(payment_id: int):
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Подтвердить оплату', callback_data=f'accept_payment_{payment_id}')
+    builder.button(text='Закрыть заявку', callback_data=f'cancel_payments_{payment_id}')
 
     builder.adjust(1)
 

@@ -2,7 +2,8 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 from typing import Callable, Dict, Any, Awaitable
 import requests
-from core.constants import REGISTRY_PROFILE_URL, CREATE_PROFILE_URL, SECRET_KEY, UPDATE_PROFILE_URL
+from core.constants import REGISTRY_PROFILE_URL, CREATE_PROFILE_URL, SECRET_KEY, UPDATE_PROFILE_URL, PERMISSION_URL
+from utils.keyboards import cancel_keyboard
 
 class RegisterMiddleware(BaseMiddleware):
     def __init__(self) -> None:
@@ -38,3 +39,27 @@ class RegisterMiddleware(BaseMiddleware):
                         headers={'Secret-Key': SECRET_KEY}
                     )
         return await handler(event, data)
+
+class PermissionMiddleware(BaseMiddleware):
+    
+    def __init__(self):
+        return None
+    
+    async def __call__(
+        self,
+        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        event: Message,
+        data: Dict[str, Any]):
+        has_permitted = requests.get(PERMISSION_URL + str(event.from_user.id),  headers={'Secret-Key': SECRET_KEY})
+        if has_permitted.status_code == 200:
+            return await handler(event,data)
+        try:
+            return await event.reply(
+                'У вас нет доступа к данной функции, для его получения перейдите по кнопке настройки подписки и преобретите соответствующий тариф/активируйте пробный период',
+                reply_markup=cancel_keyboard()
+            )
+        except AttributeError:
+            return await event.answer(
+                'У вас нет доступа к данной функции, для его получения перейдите по кнопке настройки подписки и преобретите соответствующий тариф/активируйте пробный период',
+                True
+            )
