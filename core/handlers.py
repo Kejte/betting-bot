@@ -1,13 +1,11 @@
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from utils import keyboards
-from utils.parser import parse_fork
+
 from aiogram.fsm.context import FSMContext
-from utils.states import CalculateMoneyForkState, FreebetDataState, TechSupportState, UpdateTicketState
-import importlib
-from utils.caching import cache_forks, get_cached_fork_data
-from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log
-from core.constants import MANAGER
+from utils.states import TechSupportState, UpdateTicketState
+from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial
+from core.constants import MANAGER, GROUP_ID
 from aiogram.types import FSInputFile
 
 async def hello_message(callback: CallbackQuery, bot: Bot):
@@ -23,191 +21,6 @@ async def hello_message(callback: CallbackQuery, bot: Bot):
         reply_markup=keyboards.hello_keyboard()
         )
 
-async def required_bookers_list(callback: CallbackQuery, bot: Bot):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.delete()
-    await bot.send_message(
-        callback.from_user.id, 
-        'Выберите первого букмекера', 
-        reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
-
-async def optional_bookers_list(callback: CallbackQuery, bot: Bot):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.delete()
-    await bot.send_message(
-        callback.from_user.id, 
-        'Выберите второго букмекера\n\n'
-        f'Выбранный букмекер: {callback.data.split('_')[-1]}', 
-        reply_markup=keyboards.optional_bookers_list_keyboard(callback.data.split('_')[1],callback.data.split('_')[-1]))    
-
-async def search_fork(callback: CallbackQuery, bot: Bot):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.delete()
-    second_booker = callback.data.split('_')[-1] if callback.data.split('_')[-1] != 'any' else 'Любая бк' 
-    await bot.send_message(
-        callback.from_user.id,
-        f'Вы выбрали {callback.data.split('_')[-2]} - {second_booker}\n\n'
-        'Ищу вилку'
-    )
-    bookers = f'{callback.data.split('_')[-2]}_{callback.data.split('_')[-1]}'.upper()
-    cache_key = bookers
-    module = importlib.import_module('core.constants')
-    bookers = getattr(module,bookers)
-    forks = get_cached_fork_data(cache_key)
-    if not forks:
-        forks = parse_fork(bookers)
-        cache_forks(forks, cache_key)
-    try:
-        fork = forks[0]
-    except IndexError:
-        await bot.send_message(callback.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
-        return
-    responce = generate_fork_message(fork)
-    await bot.send_message(
-        callback.from_user.id, 
-        responce, 
-        reply_markup=keyboards.money_fork_keyboard(
-        first_booker=fork['first_booker'],
-        first_coef=float(fork['coef_on_first_booker']),
-        second_booker=fork['second_booker'],
-        second_coef=float(fork['coef_on_second_booker']),
-        profit=float(fork['profit'].split('%')[0]),
-        index=0,
-        lenght=len(forks),
-        bookers=cache_key
-        ))
-
-async def paginate_forks(callback: CallbackQuery, bot: Bot):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.delete()
-    index = int(callback.data.split('_')[-3]) 
-    bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
-    forks = get_cached_fork_data(bookers)
-    if not forks:
-        module = importlib.import_module('core.constants')
-        url = getattr(module,bookers)
-        forks = parse_fork(url, bot)
-        cache_forks(forks, bookers)
-    fork = forks[index]
-    responce = generate_fork_message(fork)
-    await bot.send_message(
-        callback.from_user.id, 
-        responce, 
-        reply_markup=keyboards.money_fork_keyboard(
-        first_booker=fork['first_booker'],
-        first_coef=float(fork['coef_on_first_booker']),
-        second_booker=fork['second_booker'],
-        second_coef=float(fork['coef_on_second_booker']),
-        profit=float(fork['profit'].split('%')[0]),
-        index=index,
-        lenght=len(forks),
-        bookers=bookers
-        ))
-
-async def pre_calculate_fork(callback: CallbackQuery, bot: Bot, state: FSMContext):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.answer('Введите сумму вилки')
-    await state.set_state(CalculateMoneyForkState.GET_AMOUNT)
-    data = callback.data.split('_')
-    await state.update_data(
-        first_booker=data[3],
-        first_coef=data[4],
-        second_booker=data[5],
-        second_coef=data[6],
-        profit=data[7]
-    )
-
-async def calculate_fork(message: Message, bot: Bot, state: FSMContext):
-    context = await state.get_data()
-    amount = message.text
-    chance = 1/float(context['first_coef'])+1/float(context['second_coef'])
-    try:
-        amount = int(amount)
-    except Exception:
-        await message.answer('Введите только целочисленное значение')
-        return
-    bet_on_the_first_booker = (1/float(context['first_coef'])/chance) * amount 
-    bet_on_the_second_booker = (1/float(context['second_coef'])/chance) * amount
-    profit=amount/100*float(context['profit'])
-    await message.answer(
-        f'Сумма ставки на {context['first_booker']}: {round(bet_on_the_first_booker)}\n\n'
-        f'Сумма ставки на {context['second_booker']}: {round(bet_on_the_second_booker)}\n\n'
-        f'Гарантированный доход: {round(profit,2)} руб.',
-        reply_markup=keyboards.money_fork_calculating_keyboard(context['first_booker'],context['first_coef'],context['second_booker'],context['second_coef'],context['profit'])
-    )
-    await state.clear()
-
-async def choice_freebet_booker(callback: CallbackQuery, bot: Bot):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.delete()
-    await bot.send_message(
-        callback.from_user.id, 
-        'Выберите букмекера с фрибетом', 
-        reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
-    
-async def get_freebet_amount(callback: CallbackQuery, bot: Bot, state: FSMContext):
-    await bot.answer_callback_query(callback.id)
-    booker = callback.data.split('_')[-1].upper() + '_ANY'
-    await state.set_state(FreebetDataState.GET_FREEBET_AMOUNT)
-    await bot.send_message(
-        callback.from_user.id,
-        'Введите номинал фрибета',
-        reply_markup=keyboards.cancel_keyboard()
-    )
-    await state.update_data(booker=booker)
-
-async def get_freebet_coef(message: Message, bot: Bot, state: FSMContext):
-    try:
-        await state.update_data(amount=int(message.text))
-        await state.set_state(FreebetDataState.GET_FREEBET_COEFF)
-        await bot.send_message(
-            message.from_user.id,
-            'Введите ограничение по коэффиценту, если фрибет без ограничений, то напишите нет',
-            reply_markup=keyboards.cancel_keyboard()
-        )
-    except Exception:
-        await bot.send_message(message.from_user.id,'Введите целочисленное значение')
-
-async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
-    try:
-        context = await state.get_data()
-        max_coeff = float(message.text) if message.text.lower() != 'нет' else 10
-        await bot.send_message(
-            message.from_user.id,
-            'Ищу вилку подходящую вашим параметрам\n\n'
-            f'Выбранный букмекер: {context['booker'][0] + context["booker"].split('_')[0][1:].lower()}\n\n'
-            f'Номинал фрибета: {context['amount']}\n\n'
-            f'Ограничение по коэффиценту: {max_coeff}' 
-        )
-        forks = get_freebet_forks(context['booker'], float(max_coeff), int(context['amount']))
-        fork = forks[0]
-        response = generate_freebet_fork_message(fork, int(context['amount']), context['booker'])
-        await state.clear()
-        await bot.send_message(message.from_user.id, response, reply_markup=keyboards.freebet_fork_keyboard(index=0,lenght=len(forks),bookers=context['booker'],freebet=int(context['amount']),max_coeff=float(max_coeff)))
-    except IndexError:
-        await bot.send_message(message.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
-    except Exception as e:
-        print(e)
-        await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
-
-async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
-    await bot.answer_callback_query(callback.id)
-    await callback.message.delete()
-    index = int(callback.data.split('_')[-3]) 
-    bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
-    forks = get_freebet_forks(bookers,float(callback.data.split('_')[-5]),int(callback.data.split('_')[-4]))
-    fork = forks[index]
-    responce = generate_freebet_fork_message(fork,freebet=int(callback.data.split('_')[-4]),booker=bookers)
-    await bot.send_message(
-        callback.from_user.id, 
-        responce, 
-        reply_markup=keyboards.freebet_fork_keyboard(
-        index=index,
-        lenght=len(forks),
-        bookers=bookers,
-        max_coeff=float(callback.data.split('_')[-5]),
-        freebet=int(callback.data.split('_')[-4])
-        ))
 
 async def feedback(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
@@ -256,7 +69,7 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
         f'Тариф {callback.data.split('_')[-1]}\n\n'
         f'{tariff['description']}\n\n'
         f'*{cost_string}*',
-        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2])),
+        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2]), callback.from_user.id),
         parse_mode="Markdown"
     )
 
@@ -307,7 +120,21 @@ async def create_update_ticket(message: Message, bot: Bot, state: FSMContext):
 async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    subscribe = ...
+    subscribe = get_subscribe(callback.from_user.id)
+    if subscribe:
+        await bot.send_message(
+            callback.from_user.id,
+            f'Текущий тарифный план: {subscribe['tariff']}\n\n'
+            f'Осталось дней до конца подписки: {subscribe['remained_days']}\n\n'
+            f'Стоимость тарифа: {subscribe['cost']}',
+            reply_markup=keyboards.back_to_payment_keyboard()
+        )
+        return
+    await bot.send_message(
+        callback.from_user.id,
+        'У вас нет актуальной подписки, для её оформления перейдите в тарифы и оставьте заявку на покупу/активируйте пробный период',
+        reply_markup=keyboards.payments_keyboard()
+    )
 
 async def update_log(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
@@ -328,4 +155,77 @@ async def public_offer(callback: CallbackQuery, bot: Bot):
             FSInputFile('files/public_offer.pdf'),
             reply_markup=keyboards.cancel_keyboard()
         )
+
+async def create_purchase_request(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    payment_id = create_purchase_tariff(tariff=callback.data.split('_')[-1],tg_id=callback.from_user.id)
+    match payment_id:
+        case False:
+            await bot.send_message(
+                callback.from_user.id,
+                'У вас есть действующая подписка или вы уже оставили действующий запрос на покупку тарифного плана, во втором случае в скором времени с вами свяжется администратор',
+                reply_markup=keyboards.cancel_keyboard()
+            )
+        case _:
+            tariff = get_tariff(callback.data.split('_')[-1])
+            await bot.send_message(
+                callback.from_user.id,
+                f'Ваша заявка на покупку тарифа {tariff['title']} принята в обработку, для оплаты с вами свяжется администратор. Спасибо, что выбрали наш сервис!',
+                reply_markup=keyboards.cancel_keyboard()
+            )
+            await bot.send_message(
+                GROUP_ID,
+                f'Пользователь @{callback.from_user.username} оставил заявку на преобретение тарифа {tariff['title']}',
+                message_thread_id=2,
+                reply_markup=keyboards.purchase_request_keyboard(payment_id=payment_id)
+            )
+
+async def update_purchase_request(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    action = callback.data.split('_')[-2]
+    update_purchase_status(payment_id=callback.data.split('_')[-1], action=action)
+    match callback.data.split('_')[-2]:
+        case 'cancel':
+            await bot.send_message(
+                GROUP_ID,
+                f'Заявка №{callback.data.split('_')[-1]} была отклонена',
+                message_thread_id=29
+            )
+            tariffs = get_tariffs()
+            await bot.send_message(
+                callback.from_user.id,
+                f'По некоторым причинам ваша заявка на преобретение тарифа отклонена, создайте новую подписку или обратитесь в техническую поддержку.',
+                reply_markup=keyboards.tariffs_keyboard(tariffs=tariffs)
+            )
+        case 'accept':
+            await bot.send_message(
+                GROUP_ID,
+                f'Заявка №{callback.data.split('_')[-1]} была успешно принята',
+                message_thread_id=4
+            )
+            await bot.send_message(
+                callback.from_user.id,
+                f'Благодарим вас за покупку! Вам выдан доступ к боту в соответствии с вашим тарифным планом',
+                reply_markup=keyboards.hello_keyboard()
+            )
+            
+async def activate_trial_period(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    activate_trial(callback.from_user.id, callback.data.split('_')[-1])
+    await bot.send_message(
+        callback.from_user.id,
+        'Вы успешно активировали пробный период тарифа, приятного использования!',
+        reply_markup=keyboards.cancel_keyboard()
+    )
+    await bot.send_message(
+        GROUP_ID,
+        f'Пользователь @{callback.from_user.username} оформил пробный период',
+        message_thread_id=6
+    )
+
+
+
 

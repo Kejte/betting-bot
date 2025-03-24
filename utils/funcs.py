@@ -1,7 +1,7 @@
 from utils.caching import cache_forks, get_cached_fork_data
 from utils.parser import parse_fork
 import importlib
-from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL, CREATE_TECH_SUPPORT_TICKET_URL, CREATE_UPDATE_TICKET_URL, GET_UPDATE_LOG_URL #SUBSCRIPTION_URL
+from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL, CREATE_TECH_SUPPORT_TICKET_URL, CREATE_UPDATE_TICKET_URL, GET_UPDATE_LOG_URL, CREATE_PURCHASE_REQUEST_URL, UPDATE_PAYMENT_URL, SUBSCRIPTION_URL, ACTIVATE_TRIAL_URL
 import requests
 
 def generate_fork_message(fork: dict):
@@ -103,5 +103,29 @@ def create_update_support_ticket(text: str, tg_id: int):
 def get_update_log():
     return requests.get(GET_UPDATE_LOG_URL,headers={'Secret-Key': SECRET_KEY}).json()
 
-# def get_subscribe(tg_id: int):
-#     return requests.get(SUBSCRIPTION_URL + str(id),headers={'Secret-Key': SECRET_KEY}).json()
+def create_purchase_tariff(tariff: int, tg_id: int):
+    json = {
+        'profile': tg_id,
+        'tariff': tariff
+    }
+    res = requests.post(CREATE_PURCHASE_REQUEST_URL, headers={'Secret-Key': SECRET_KEY}, json=json)
+    return res.json()['id'] if res.status_code == 200 else False
+
+def update_purchase_status(payment_id: int, action: str):
+    requests.put(UPDATE_PAYMENT_URL + f'?payment_id={payment_id}&action={action}',headers={'Secret-Key': SECRET_KEY})
+
+def get_subscribe(tg_id: int):
+    try:
+        return requests.get(SUBSCRIPTION_URL + str(tg_id),headers={'Secret-Key': SECRET_KEY}).json() 
+    except requests.exceptions.JSONDecodeError:
+        return
+
+def activate_trial(tg_id: int, tariff_id: int):
+    json = {
+        'profile': tg_id,
+        'tariff': tariff_id 
+    }
+    requests.post(ACTIVATE_TRIAL_URL, headers={'Secret-Key': SECRET_KEY}, json=json)
+
+def check_trial(tg_id: int, tariff_id: int):
+    return True if requests.get(ACTIVATE_TRIAL_URL + f'?tg_id={tg_id}&tariff_id={tariff_id}', headers={'Secret-Key': SECRET_KEY}).status_code == 201 else False

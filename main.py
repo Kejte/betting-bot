@@ -3,13 +3,13 @@ import os
 import logging
 from core import handlers
 from core.settings import settings
-from aiogram import Bot, Dispatcher, F 
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from utils.commands import set_commands
 from aiogram.client.default import DefaultBotProperties
 from utils import states
 from core.middlewares import RegisterMiddleware
-
+from core import fork_router
 
 async def start_bot(bot: Bot):
     await set_commands(bot)
@@ -27,25 +27,18 @@ async def load_bot():
     bot = Bot(token=settings.bots.bot_token, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher()
 
+
     # STAFF handlers
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
     dp.message.middleware.register(RegisterMiddleware())
     dp.callback_query.middleware.register(RegisterMiddleware())
+    dp.include_routers(fork_router.router)
+    
 
+    #etc handlers
     dp.message.register(handlers.hello_message, Command(commands='start'))
     dp.callback_query.register(handlers.hello_message,F.data=='main_menu')
-    dp.callback_query.register(handlers.required_bookers_list, F.data.startswith('search_money'))
-    dp.callback_query.register(handlers.optional_bookers_list, F.data.startswith('required_money'))
-    dp.callback_query.register(handlers.search_fork,F.data.startswith('selected_money'))
-    dp.callback_query.register(handlers.paginate_forks,F.data.startswith('paginate_money'))
-    dp.callback_query.register(handlers.paginate_freebet_forks, F.data.startswith('paginate_freebet'))
-    dp.callback_query.register(handlers.pre_calculate_fork, F.data.startswith('calculate_money_fork'))
-    dp.callback_query.register(handlers.choice_freebet_booker, F.data.startswith('search_freebet'))
-    dp.callback_query.register(handlers.get_freebet_amount,F.data.startswith('required_freebet'))
-    dp.message.register(handlers.calculate_fork, states.CalculateMoneyForkState.GET_AMOUNT)
-    dp.message.register(handlers.get_freebet_coef, states.FreebetDataState.GET_FREEBET_AMOUNT)
-    dp.message.register(handlers.freebet_forks, states.FreebetDataState.GET_FREEBET_COEFF)
     dp.callback_query.register(handlers.payments, F.data == 'payments')
     dp.callback_query.register(handlers.tariffs_list, F.data == 'tariffs')
     dp.callback_query.register(handlers.retrieve_tariff, F.data.startswith('tariff_'))
@@ -56,7 +49,11 @@ async def load_bot():
     dp.message.register(handlers.create_update_ticket, states.UpdateTicketState.GET_TICKET_TEXT)
     dp.callback_query.register(handlers.update_log, F.data == 'update_log')
     dp.callback_query.register(handlers.public_offer, F.data == 'public_offer')
-
+    dp.callback_query.register(handlers.create_purchase_request, F.data.startswith('purchase_'))
+    dp.callback_query.register(handlers.update_purchase_request, F.data.startswith('upd_payment'))
+    dp.callback_query.register(handlers.retrieve_subcription, F.data == 'actual_subscribe')
+    dp.callback_query.register(handlers.activate_trial_period, F.data.startswith('activate_trial'))
+    
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
