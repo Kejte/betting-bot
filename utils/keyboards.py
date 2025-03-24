@@ -1,6 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from core.constants import BOOKERS_LIST
+from utils.funcs import check_trial
 
 def hello_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
@@ -76,6 +77,8 @@ def money_fork_calculating_keyboard(first_booker: str, first_coef: float, second
     builder = InlineKeyboardBuilder()
 
     builder.button(text='Пересчитать',callback_data=f'calculate_money_fork_{first_booker}_{first_coef}_{second_booker}_{second_coef}_{profit}')
+    builder.button(text='Назад к выбору бк', callback_data='search_freebet_fork')
+    builder.button(text='Назад в меню', callback_data='main_menu')
 
     builder.adjust(1)
 
@@ -113,11 +116,12 @@ def payments_keyboard():
 
     return builder.as_markup()
 
-def tariff_keyboard(id: int):
+def tariff_keyboard(id: int, tg_id: int):
     builder = InlineKeyboardBuilder()
 
     builder.button(text='Купить', callback_data=f'purchase_tariff_{id}')
-    builder.button(text='Активировать пробный период', callback_data=f'activate_trial_{id}')
+    if check_trial(tg_id,id):
+        builder.button(text='Активировать пробный период', callback_data=f'activate_trial_{id}')
     builder.button(text='Назад к тарифам', callback_data='tariffs')
     builder.button(text='Назад в меню', callback_data='main_menu')
 

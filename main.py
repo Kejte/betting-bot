@@ -52,6 +52,7 @@ async def load_bot():
     dp.callback_query.register(handlers.create_purchase_request, F.data.startswith('purchase_'))
     dp.callback_query.register(handlers.update_purchase_request, F.data.startswith('upd_payment'))
     dp.callback_query.register(handlers.retrieve_subcription, F.data == 'actual_subscribe')
+    dp.callback_query.register(handlers.activate_trial_period, F.data.startswith('activate_trial'))
     
     try:
         await bot.delete_webhook(drop_pending_updates=True)

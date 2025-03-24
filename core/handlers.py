@@ -4,7 +4,7 @@ from utils import keyboards
 
 from aiogram.fsm.context import FSMContext
 from utils.states import TechSupportState, UpdateTicketState
-from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe
+from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial
 from core.constants import MANAGER, GROUP_ID
 from aiogram.types import FSInputFile
 
@@ -69,7 +69,7 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
         f'Тариф {callback.data.split('_')[-1]}\n\n'
         f'{tariff['description']}\n\n'
         f'*{cost_string}*',
-        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2])),
+        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2]), callback.from_user.id),
         parse_mode="Markdown"
     )
 
@@ -121,12 +121,19 @@ async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     subscribe = get_subscribe(callback.from_user.id)
+    if subscribe:
+        await bot.send_message(
+            callback.from_user.id,
+            f'Текущий тарифный план: {subscribe['tariff']}\n\n'
+            f'Осталось дней до конца подписки: {subscribe['remained_days']}\n\n'
+            f'Стоимость тарифа: {subscribe['cost']}',
+            reply_markup=keyboards.back_to_payment_keyboard()
+        )
+        return
     await bot.send_message(
         callback.from_user.id,
-        f'Текущий тарифный план: {subscribe['tariff']}\n\n'
-        f'Осталось дней до конца подписки: {subscribe['remained_days']}\n\n'
-        f'Стоимость тарифа: {subscribe['cost']}',
-        reply_markup=keyboards.back_to_payment_keyboard()
+        'У вас нет актуальной подписки, для её оформления перейдите в тарифы и оставьте заявку на покупу/активируйте пробный период',
+        reply_markup=keyboards.payments_keyboard()
     )
 
 async def update_log(callback: CallbackQuery, bot: Bot):
@@ -190,7 +197,7 @@ async def update_purchase_request(callback: CallbackQuery, bot: Bot):
             await bot.send_message(
                 callback.from_user.id,
                 f'По некоторым причинам ваша заявка на преобретение тарифа отклонена, создайте новую подписку или обратитесь в техническую поддержку.',
-                keyboards.tariffs_keyboard(tariffs=tariffs)
+                reply_markup=keyboards.tariffs_keyboard(tariffs=tariffs)
             )
         case 'accept':
             await bot.send_message(
@@ -207,7 +214,18 @@ async def update_purchase_request(callback: CallbackQuery, bot: Bot):
 async def activate_trial_period(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    
+    activate_trial(callback.from_user.id, callback.data.split('_')[-1])
+    await bot.send_message(
+        callback.from_user.id,
+        'Вы успешно активировали пробный период тарифа, приятного использования!',
+        reply_markup=keyboards.cancel_keyboard()
+    )
+    await bot.send_message(
+        GROUP_ID,
+        f'Пользователь @{callback.from_user.username} оформил пробный период',
+        message_thread_id=6
+    )
+
 
 
 

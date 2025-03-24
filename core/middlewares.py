@@ -4,6 +4,7 @@ from typing import Callable, Dict, Any, Awaitable
 import requests
 from core.constants import REGISTRY_PROFILE_URL, CREATE_PROFILE_URL, SECRET_KEY, UPDATE_PROFILE_URL, PERMISSION_URL
 from utils.keyboards import cancel_keyboard
+from utils.caching import check_cached_user
 
 class RegisterMiddleware(BaseMiddleware):
     def __init__(self) -> None:
@@ -15,29 +16,30 @@ class RegisterMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any]
     ) -> Any:
-        profile_exists = requests.get(REGISTRY_PROFILE_URL + str(event.from_user.id), headers={'Secret-Key': SECRET_KEY})
-        match profile_exists.status_code:
-            case 400:
-                json = {
-                    'tg_id': str(event.from_user.id),
-                    'username': '@'+str(event.from_user.username)
-                }
-                requests.post(
-                    CREATE_PROFILE_URL,
-                    json=json,
-                    headers={'Secret-Key': SECRET_KEY}
-                )
-            case 200:
-                if profile_exists.json()['username'][1:] != event.from_user.username:
+        if not check_cached_user(event.from_user.id):
+            profile_exists = requests.get(REGISTRY_PROFILE_URL + str(event.from_user.id), headers={'Secret-Key': SECRET_KEY})
+            match profile_exists.status_code:
+                case 400:
                     json = {
-                        'username': '@' + str(event.from_user.username),
-                        'tg_id': event.from_user.id
+                        'tg_id': str(event.from_user.id),
+                        'username': '@'+str(event.from_user.username)
                     }
-                    req = requests.put(
-                        UPDATE_PROFILE_URL + str(event.from_user.id),
+                    requests.post(
+                        CREATE_PROFILE_URL,
                         json=json,
                         headers={'Secret-Key': SECRET_KEY}
                     )
+                case 200:
+                    if profile_exists.json()['username'][1:] != event.from_user.username:
+                        json = {
+                            'username': '@' + str(event.from_user.username),
+                            'tg_id': event.from_user.id
+                        }
+                        req = requests.put(
+                            UPDATE_PROFILE_URL + str(event.from_user.id),
+                            json=json,
+                            headers={'Secret-Key': SECRET_KEY}
+                        )
         return await handler(event, data)
 
 class PermissionMiddleware(BaseMiddleware):
