@@ -178,15 +178,15 @@ async def create_purchase_request(callback: CallbackQuery, bot: Bot):
                 GROUP_ID,
                 f'Пользователь @{callback.from_user.username} оставил заявку на преобретение тарифа {tariff['title']}',
                 message_thread_id=2,
-                reply_markup=keyboards.purchase_request_keyboard(payment_id=payment_id)
+                reply_markup=keyboards.purchase_request_keyboard(payment_id=payment_id, tg_id=callback.from_user.id)
             )
 
 async def update_purchase_request(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    action = callback.data.split('_')[-2]
+    action = callback.data.split('_')[-3]
     update_purchase_status(payment_id=callback.data.split('_')[-1], action=action)
-    match callback.data.split('_')[-2]:
+    match callback.data.split('_')[-3]:
         case 'cancel':
             await bot.send_message(
                 GROUP_ID,
@@ -195,7 +195,7 @@ async def update_purchase_request(callback: CallbackQuery, bot: Bot):
             )
             tariffs = get_tariffs()
             await bot.send_message(
-                callback.from_user.id,
+                callback.data.split('_')[-2],
                 f'По некоторым причинам ваша заявка на преобретение тарифа отклонена, создайте новую подписку или обратитесь в техническую поддержку.',
                 reply_markup=keyboards.tariffs_keyboard(tariffs=tariffs)
             )
@@ -206,7 +206,7 @@ async def update_purchase_request(callback: CallbackQuery, bot: Bot):
                 message_thread_id=4
             )
             await bot.send_message(
-                callback.from_user.id,
+                callback.data.split('_')[-2],
                 f'Благодарим вас за покупку! Вам выдан доступ к боту в соответствии с вашим тарифным планом',
                 reply_markup=keyboards.hello_keyboard()
             )

@@ -80,7 +80,7 @@ async def paginate_forks(callback: CallbackQuery, bot: Bot):
     if not forks:
         module = importlib.import_module('core.constants')
         url = getattr(module,bookers)
-        forks = parse_fork(url, bot)
+        forks = parse_fork(url)
         cache_forks(forks, bookers)
     fork = forks[index]
     responce = generate_fork_message(fork)

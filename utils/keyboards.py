@@ -140,11 +140,11 @@ def feedback_keyboard():
 
     return builder.as_markup()
 
-def purchase_request_keyboard(payment_id: int):
+def purchase_request_keyboard(payment_id: int, tg_id: int):
     builder = InlineKeyboardBuilder()
 
-    builder.button(text='Подтвердить оплату', callback_data=f'upd_payment_accept_{payment_id}')
-    builder.button(text='Закрыть заявку', callback_data=f'upd_payment_cancel_{payment_id}')
+    builder.button(text='Подтвердить оплату', callback_data=f'upd_payment_accept_{tg_id}_{payment_id}')
+    builder.button(text='Закрыть заявку', callback_data=f'upd_payment_cancel_{tg_id}_{payment_id}')
 
     builder.adjust(1)
 
