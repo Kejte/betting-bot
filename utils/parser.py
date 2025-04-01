@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from utils.session_generator import SessionGenerator
 
-def parse_fork(link):
+def parse_fork(link, offset: int = None):
     try:
 
         session = SessionGenerator.get_session()
@@ -52,14 +52,16 @@ def parse_fork(link):
                 'second_booker': second_booker.replace('\n', ''),
                 'bet_on_second_booker': bet_on_second_booker,
                 'coef_on_second_booker': coef_on_second_booker,
-            }) 
+            })
 
-        return result
+            if offset == len(result):
+                break 
+
+        return result 
     
     except AttributeError as e:
         print(e)
         return
-        return parse_fork(link)
 
 
 
