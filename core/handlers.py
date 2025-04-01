@@ -4,9 +4,13 @@ from utils import keyboards
 
 from aiogram.fsm.context import FSMContext
 from utils.states import TechSupportState, UpdateTicketState
-from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial
+from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial, generate_fork_message
 from core.constants import MANAGER, GROUP_ID
 from aiogram.types import FSInputFile
+from utils.parser import parse_fork
+from core.constants import MAX_MONEY_FORK_URL, FORK_CHAT_ID
+import datetime
+import pytz
 
 async def hello_message(callback: CallbackQuery, bot: Bot):
     try:
@@ -226,6 +230,16 @@ async def activate_trial_period(callback: CallbackQuery, bot: Bot):
         message_thread_id=6
     )
 
+async def get_max_money_fork(bot: Bot):
+    parsed_forks = parse_fork(MAX_MONEY_FORK_URL,5)
+    res = f'{datetime.datetime.now(pytz.timezone('Europe/Moscow')).strftime('%Y-%m-%d %H:%M:%S')} \n\n\n'
+    for fork in parsed_forks:
+        res += generate_fork_message(fork) + '\n\n\n' + '---------------------' + '\n\n\n'
+    
+    await bot.send_message(
+        FORK_CHAT_ID,
+        res
+    )
 
 
 

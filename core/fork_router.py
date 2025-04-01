@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from utils.states import CalculateMoneyForkState, FreebetDataState
 import importlib
 from utils.caching import cache_forks, get_cached_fork_data
-from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log
+from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message 
 from aiogram import Router, F
 from core.middlewares import PermissionMiddleware
 

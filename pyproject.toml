@@ -19,6 +19,7 @@ sqlalchemy = "^2.0.38"
 alembic = "^1.15.1"
 aiosqlite = "^0.21.0"
 loguru = "^0.7.3"
+pytz = "^2025.2"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"

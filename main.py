@@ -10,6 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 from utils import states
 from core.middlewares import RegisterMiddleware
 from core import fork_router
+from core.handlers import get_max_money_fork
 
 async def start_bot(bot: Bot):
     await set_commands(bot)
@@ -54,12 +55,20 @@ async def load_bot():
     dp.callback_query.register(handlers.retrieve_subcription, F.data == 'actual_subscribe')
     dp.callback_query.register(handlers.activate_trial_period, F.data.startswith('activate_trial'))
     
+    
+
     try:
         await bot.delete_webhook(drop_pending_updates=True)
+        loop = asyncio.get_event_loop()
+        loop.create_task(shedule_message(bot))
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
 
+async def shedule_message(bot: Bot):
+    while True:
+        await get_max_money_fork(bot)
+        await asyncio.sleep(1800)
 
 if __name__ == '__main__':
     asyncio.run(load_bot())
