@@ -197,7 +197,7 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
 async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    index = int(callback.data.split('_')[-4]) 
+    index = int(callback.data.split('_')[-3]) 
     bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
     permission = get_user_permission(callback.from_user.id)
     forks = get_freebet_forks(bookers,float(callback.data.split('_')[-5]),int(callback.data.split('_')[-4]), permission)
