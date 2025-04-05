@@ -18,7 +18,8 @@ async def required_bookers_list(callback: CallbackQuery, bot: Bot):
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id, 
-        'Выберите первого букмекера', 
+        f'Выберите первого букмекера\n\n'
+        f'ℹ️ Fonbet, Pari и Bettery являются клонами одной бк, вилки которые бот выдаёт при выборе Fonbet подходят на все 3 конторы', 
         reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
 
 @router.callback_query(F.data.startswith('required_money'))
@@ -28,7 +29,8 @@ async def optional_bookers_list(callback: CallbackQuery, bot: Bot):
     await bot.send_message(
         callback.from_user.id, 
         'Выберите второго букмекера\n\n'
-        f'Выбранный букмекер: {callback.data.split('_')[-1]}', 
+        f'Выбранный букмекер: {callback.data.split('_')[-1]}\n\n'
+        f'ℹ️ Fonbet, Pari и Bettery являются клонами одной бк, вилки которые бот выдаёт при выборе Fonbet подходят на все 3 конторы', 
         reply_markup=keyboards.optional_bookers_list_keyboard(callback.data.split('_')[1],callback.data.split('_')[-1]))    
 
 @router.callback_query(F.data.startswith('selected_money'))
@@ -141,7 +143,8 @@ async def choice_freebet_booker(callback: CallbackQuery, bot: Bot):
     await callback.message.delete()
     await bot.send_message(
         callback.from_user.id, 
-        'Выберите букмекера с фрибетом', 
+        'Выберите букмекера с фрибетом\n\n'
+        f'ℹ️ Fonbet, Pari и Bettery являются клонами одной бк, вилки которые бот выдаёт при выборе Fonbet подходят на все 3 конторы', 
         reply_markup=keyboards.bookers_list_keyboard(callback.data.split('_')[1]))
 
 @router.callback_query(F.data.startswith('required_freebet'))   
