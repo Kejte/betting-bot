@@ -3,8 +3,7 @@ from aiogram.types import Message
 from typing import Callable, Dict, Any, Awaitable
 import requests
 from core.constants import REGISTRY_PROFILE_URL, CREATE_PROFILE_URL, SECRET_KEY, UPDATE_PROFILE_URL, PERMISSION_URL
-from utils.keyboards import cancel_keyboard
-from utils.caching import check_cached_user
+from utils.caching import check_cached_user, cache_profile
 
 class RegisterMiddleware(BaseMiddleware):
     def __init__(self) -> None:
@@ -18,6 +17,7 @@ class RegisterMiddleware(BaseMiddleware):
     ) -> Any:
         if not check_cached_user(event.from_user.id):
             profile_exists = requests.get(REGISTRY_PROFILE_URL + str(event.from_user.id), headers={'Secret-Key': SECRET_KEY})
+            has_permitted = 'free' if requests.get(PERMISSION_URL + str(event.from_user.id),  headers={'Secret-Key': SECRET_KEY}).status_code == 400 else 'private'
             match profile_exists.status_code:
                 case 400:
                     json = {
@@ -40,28 +40,6 @@ class RegisterMiddleware(BaseMiddleware):
                             json=json,
                             headers={'Secret-Key': SECRET_KEY}
                         )
+            cache_profile(tg_id=event.from_user.id,permission=has_permitted)
         return await handler(event, data)
 
-class PermissionMiddleware(BaseMiddleware):
-    
-    def __init__(self):
-        return None
-    
-    async def __call__(
-        self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message,
-        data: Dict[str, Any]):
-        has_permitted = requests.get(PERMISSION_URL + str(event.from_user.id),  headers={'Secret-Key': SECRET_KEY})
-        if has_permitted.status_code == 200:
-            return await handler(event,data)
-        try:
-            return await event.reply(
-                'У вас нет доступа к данной функции, для его получения перейдите по кнопке настройки подписки и преобретите соответствующий тариф/активируйте пробный период',
-                reply_markup=cancel_keyboard()
-            )
-        except AttributeError:
-            return await event.answer(
-                'У вас нет доступа к данной функции, для его получения перейдите по кнопке настройки подписки и преобретите соответствующий тариф/активируйте пробный период',
-                True
-            )

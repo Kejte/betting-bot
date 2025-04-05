@@ -4,9 +4,9 @@ from utils import keyboards
 
 from aiogram.fsm.context import FSMContext
 from utils.states import TechSupportState, UpdateTicketState
-from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial, generate_fork_message
+from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial, generate_fork_message, get_promocodes, get_promocodes_status, retrieve_promocode, activate_promocode, get_activated_promocode
 from core.constants import MANAGER, GROUP_ID
-from aiogram.types import FSInputFile
+from utils.caching import cache_profile
 from utils.parser import parse_fork
 from core.constants import MAX_MONEY_FORK_URL, FORK_CHAT_ID
 import datetime
@@ -22,7 +22,7 @@ async def hello_message(callback: CallbackQuery, bot: Bot):
         callback.from_user.id,
         'Привет!\n\n'
         'Я бот по поиску букмекерских вилок. С моей помощью ты можешь найти вилки для отыгрыша баланса и твоих фрибетов.\n\n', 
-        reply_markup=keyboards.hello_keyboard()
+        reply_markup=keyboards.hello_keyboard(callback.from_user.id)
         )
 
 
@@ -67,13 +67,14 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     tariff = get_tariff(callback.data.split('_')[-2])
-    cost_string = f'{tariff['cost']} руб. / {tariff['duration']} дней' if tariff['duration'] > 5 else f'{tariff['cost']} / {tariff['duration']} дня'
-    await bot.send_message(
-        callback.from_user.id,
-        f'Тариф {callback.data.split('_')[-1]}\n\n'
+    await bot.send_photo(
+        photo=tariff['photo'],
+        chat_id=callback.from_user.id,
+        caption = f'Тариф {callback.data.split('_')[-1]}\n\n'
         f'{tariff['description']}\n\n'
-        f'*{cost_string}*',
-        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2]), callback.from_user.id),
+        f'*— Период: {tariff['duration']}*\n\n'
+        f'*— Цена: {tariff['cost']} RUB*',
+        reply_markup=keyboards.tariff_keyboard(int(callback.data.split('_')[-2])),
         parse_mode="Markdown"
     )
 
@@ -128,9 +129,9 @@ async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
     if subscribe:
         await bot.send_message(
             callback.from_user.id,
-            f'Текущий тарифный план: {subscribe['tariff']}\n\n'
-            f'Осталось дней до конца подписки: {subscribe['remained_days']}\n\n'
-            f'Стоимость тарифа: {subscribe['cost']}',
+            f'📕 Текущий тарифный план: {subscribe['tariff']}\n\n'
+            f'🗓 Осталось дней до конца подписки: {subscribe['remained_days']}\n\n'
+            f'💸 Стоимость тарифа: {subscribe['cost']}',
             reply_markup=keyboards.back_to_payment_keyboard()
         )
         return
@@ -151,19 +152,33 @@ async def update_log(callback: CallbackQuery, bot: Bot):
         reply_markup=keyboards.cancel_keyboard()
     )
 
-async def public_offer(callback: CallbackQuery, bot: Bot):
+async def pre_create_purchase_request(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    await bot.send_document(
-            callback.from_user.id,
-            FSInputFile('files/public_offer.pdf'),
-            reply_markup=keyboards.cancel_keyboard()
-        )
+    tariff = get_tariff(callback.data.split('_')[-1])
+    promocode = get_activated_promocode(callback.from_user.id, tariff_id=tariff['id'])
+    amount = tariff['cost'] if not promocode else int(tariff['cost'])-promocode['discount']
+    await bot.send_message(
+        callback.from_user.id,
+        f'📕 *Продукт:* Доступ к полной версии телеграмм бота Betting\n\n'
+        f'🗓 *Тарифный план*: {tariff['title']}\n\n'
+        f'— Тип платежа: Единоразовый\n'
+        f'— Сумма к оплате: {amount}\n\n'
+        'После оплаты будет предоставлен доступ:\n\n'
+        f'— Доступ к версии бота без ограничения % доходности на {tariff['duration']} дней/-я\n\n '
+        f'ℹ️ Оплачивая подписку, Вы принимаете условия [Публичной оферты](https://cloud.mail.ru/public/XLFj/NkEbFv31J)',
+        parse_mode='Markdown',
+        reply_markup=keyboards.pre_purchace_keyboard(callback.data.split('_')[-1], amount)
+    )
 
 async def create_purchase_request(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    payment_id = create_purchase_tariff(tariff=callback.data.split('_')[-1],tg_id=callback.from_user.id)
+    try:
+        promo = get_activated_promocode(callback.from_user.id,callback.data.split('_')[-1])['id']
+    except Exception:
+        promo = None
+    payment_id = create_purchase_tariff(tariff=callback.data.split('_')[-1],tg_id=callback.from_user.id,promo=promo)
     match payment_id:
         case False:
             await bot.send_message(
@@ -180,7 +195,7 @@ async def create_purchase_request(callback: CallbackQuery, bot: Bot):
             )
             await bot.send_message(
                 GROUP_ID,
-                f'Пользователь @{callback.from_user.username} оставил заявку на преобретение тарифа {tariff['title']}',
+                f'Пользователь @{callback.from_user.username} оставил заявку на преобретение тарифа {tariff['title']}, сумма к оплате {callback.data.split('_')[-2]} RUB',
                 message_thread_id=2,
                 reply_markup=keyboards.purchase_request_keyboard(payment_id=payment_id, tg_id=callback.from_user.id)
             )
@@ -212,8 +227,9 @@ async def update_purchase_request(callback: CallbackQuery, bot: Bot):
             await bot.send_message(
                 callback.data.split('_')[-2],
                 f'Благодарим вас за покупку! Вам выдан доступ к боту в соответствии с вашим тарифным планом',
-                reply_markup=keyboards.hello_keyboard()
+                reply_markup=keyboards.hello_keyboard(callback.from_user.id)
             )
+            cache_profile(callback.data.split('_')[-2],'private')
             
 async def activate_trial_period(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
@@ -231,7 +247,7 @@ async def activate_trial_period(callback: CallbackQuery, bot: Bot):
     )
 
 async def get_max_money_fork(bot: Bot):
-    parsed_forks = parse_fork(MAX_MONEY_FORK_URL,5)
+    parsed_forks = parse_fork(MAX_MONEY_FORK_URL,5,'private')
     res = f'{datetime.datetime.now(pytz.timezone('Europe/Moscow')).strftime('%Y-%m-%d %H:%M:%S')} \n\n\n'
     for fork in parsed_forks:
         res += generate_fork_message(fork) + '\n\n\n' + '---------------------' + '\n\n\n'
@@ -241,5 +257,54 @@ async def get_max_money_fork(bot: Bot):
         res
     )
 
+async def get_promocodes_list(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    tariff = get_tariff(callback.data.split('_')[-1])
+    if get_promocodes_status(callback.data.split('_')[-1], callback.from_user.id):
+        promocodes = get_promocodes(callback.data.split('_')[-1])
+        if promocodes:
+            await bot.send_message(
+                callback.from_user.id,
+                f'Достпуные промокоды для тарифа {tariff['title']}',
+                reply_markup=keyboards.promocodes_keyboard(promocodes,tariff)
+            )
+            return
+        await bot.send_message(
+            callback.from_user.id,
+            'К сожалению для выбранного тарифа нет доступных промокодов',
+            reply_markup=keyboards.back_promocode_keyboard(tariff)
+        )
+        return
+    await bot.send_message(
+        callback.from_user.id,
+        'У вас уже есть активированный промокод для данного тарифа, совершите покупку для того, чтобы использовать промокод, пока им не воспользовался кто-то другой, количество использований ограничено!',
+        reply_markup=keyboards.activated_promocode_keyboard(tariff['id'])
+    )
+
+
+async def retrieve_promocode_message(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    promocode = retrieve_promocode(callback.data.split('_')[-1])
+    await bot.send_message(
+        callback.from_user.id,
+        f'🎁 Промокод: {promocode['promo']}\n\n'
+        f'💥 Скидка: {promocode['discount']} руб.\n\n'
+        f'🏃 Осталось использований: {promocode['remained']}\n\n'
+        f'ℹ️ Использование промокода засчитывается, после совершения покупки, активация не гарантирует того, что промокодом не успеет воспользоваться кто-то ещё',
+        reply_markup=keyboards.activate_promocode_keyboard(promocode['id'], promocode['tariff'])
+    )
+
+async def activate_promocode_handler(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    activate_promocode(promo_id=callback.data.split('_')[-1], tg_id=callback.from_user.id)
+    await bot.send_message(
+            callback.from_user.id,
+            '💥 Промокод успешно активирован!',
+            reply_markup=keyboards.activated_promocode_keyboard(callback.data.split('_')[-2])
+        )
+    return
 
 
