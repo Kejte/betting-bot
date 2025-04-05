@@ -49,13 +49,14 @@ async def load_bot():
     dp.callback_query.register(handlers.update_ticket, F.data == 'update_ticket')
     dp.message.register(handlers.create_update_ticket, states.UpdateTicketState.GET_TICKET_TEXT)
     dp.callback_query.register(handlers.update_log, F.data == 'update_log')
-    dp.callback_query.register(handlers.public_offer, F.data == 'public_offer')
     dp.callback_query.register(handlers.create_purchase_request, F.data.startswith('purchase_'))
     dp.callback_query.register(handlers.update_purchase_request, F.data.startswith('upd_payment'))
     dp.callback_query.register(handlers.retrieve_subcription, F.data == 'actual_subscribe')
     dp.callback_query.register(handlers.activate_trial_period, F.data.startswith('activate_trial'))
-    
-    
+    dp.callback_query.register(handlers.pre_create_purchase_request, F.data.startswith('pre_purchase'))
+    dp.callback_query.register(handlers.get_promocodes_list,F.data.startswith('promocodes'))
+    dp.callback_query.register(handlers.retrieve_promocode_message,F.data.startswith('promocode'))    
+    dp.callback_query.register(handlers.activate_promocode_handler, F.data.startswith('activate_promo'))
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)

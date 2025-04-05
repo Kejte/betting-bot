@@ -1,9 +1,8 @@
 from bs4 import BeautifulSoup
 from utils.session_generator import SessionGenerator
 
-def parse_fork(link, offset: int = None):
+def parse_fork(link, offset: int = None, permission: str = None):
     try:
-
         session = SessionGenerator.get_session()
 
         header = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36'}
@@ -22,7 +21,7 @@ def parse_fork(link, offset: int = None):
             profit = trs[0].find('td', class_="profit-box").find('span', class_="profit ps-2 cursor-help").text
             start_date = trs[0].find('td', class_='time').find('abbr', class_="cursor-help").text
             lifetime = trs[0].find('span', class_='age ps-2 cursor-help').text
-            sport = trs[0].find_all('span', class_="minor")[0].text
+            sport = trs[0].find('td', class_='booker').find_all('span', class_="minor")[-1].text
             first_booker = trs[0].find('td', class_="booker").find('a', {'rel': "noopener"}).text
             event = trs[1].find('td', {'class': 'event'}).find('a', {'target': "_blank"}).text
             championship = trs[1].find('td', {'class': 'event'}).find('span', class_="minor").text
@@ -56,8 +55,10 @@ def parse_fork(link, offset: int = None):
 
             if offset == len(result):
                 break 
-
-        return result 
+        
+        if permission == 'private':
+            return result 
+        return [fork for fork in result if float(fork['profit'][:-1]) <= 1]
     
     except AttributeError as e:
         print(e)

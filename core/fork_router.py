@@ -7,9 +7,8 @@ from aiogram.fsm.context import FSMContext
 from utils.states import CalculateMoneyForkState, FreebetDataState
 import importlib
 from utils.caching import cache_forks, get_cached_fork_data
-from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message 
+from utils.funcs import generate_fork_message, get_freebet_forks, generate_freebet_fork_message, get_user_permission 
 from aiogram import Router, F
-from core.middlewares import PermissionMiddleware
 
 router = Router()
 
@@ -43,12 +42,14 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
         'Ищу вилку'
     )
     bookers = f'{callback.data.split('_')[-2]}_{callback.data.split('_')[-1]}'.upper()
-    cache_key = bookers
+    permission = get_user_permission(callback.from_user.id)
+    cache_key =  permission + '_'+ bookers
     module = importlib.import_module('core.constants')
     bookers = getattr(module,bookers)
     forks = get_cached_fork_data(cache_key)
     if not forks:
-        forks = parse_fork(bookers)
+        print(permission)
+        forks = parse_fork(bookers, permission=permission)
         cache_forks(forks, cache_key)
     try:
         fork = forks[0]
@@ -76,12 +77,13 @@ async def paginate_forks(callback: CallbackQuery, bot: Bot):
     await callback.message.delete()
     index = int(callback.data.split('_')[-3]) 
     bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
-    forks = get_cached_fork_data(bookers)
+    permission = get_user_permission(callback.from_user.id)
+    forks = get_cached_fork_data(permission + "_"+bookers)
     if not forks:
         module = importlib.import_module('core.constants')
         url = getattr(module,bookers)
-        forks = parse_fork(url)
-        cache_forks(forks, bookers)
+        forks = parse_fork(link=url, permission=permission)
+        cache_forks(forks, permission + "_"+bookers)
     fork = forks[index]
     responce = generate_fork_message(fork)
     await bot.send_message(
@@ -179,16 +181,17 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
             f'Номинал фрибета: {context['amount']}\n\n'
             f'Ограничение по коэффиценту: {max_coeff}' 
         )
-        forks = get_freebet_forks(context['booker'], float(max_coeff), int(context['amount']))
+        permission = get_user_permission(message.from_user.id)
+        forks = get_freebet_forks(context['booker'], float(max_coeff), int(context['amount']), permission)
         fork = forks[0]
         response = generate_freebet_fork_message(fork, int(context['amount']), context['booker'])
         await state.clear()
         await bot.send_message(message.from_user.id, response, reply_markup=keyboards.freebet_fork_keyboard(index=0,lenght=len(forks),bookers=context['booker'],freebet=int(context['amount']),max_coeff=float(max_coeff)))
     except IndexError:
         await bot.send_message(message.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
-    except Exception as e:
-        print(e)
-        await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
+    # except Exception as e:
+    #     print(e)
+    #     await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
 
 @router.callback_query(F.data.startswith('paginate_freebet'))
 async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
@@ -196,7 +199,8 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
     await callback.message.delete()
     index = int(callback.data.split('_')[-3]) 
     bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
-    forks = get_freebet_forks(bookers,float(callback.data.split('_')[-5]),int(callback.data.split('_')[-4]))
+    permission = get_user_permission(callback.from_user.id)
+    forks = get_freebet_forks(bookers,float(callback.data.split('_')[-5]),int(callback.data.split('_')[-4]), permission)
     fork = forks[index]
     responce = generate_freebet_fork_message(fork,freebet=int(callback.data.split('_')[-4]),booker=bookers)
     await bot.send_message(
@@ -209,6 +213,3 @@ async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
         max_coeff=float(callback.data.split('_')[-5]),
         freebet=int(callback.data.split('_')[-4])
         ))
-
-router.message.middleware(PermissionMiddleware())
-router.callback_query.middleware(PermissionMiddleware())
