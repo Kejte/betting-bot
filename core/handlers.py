@@ -137,7 +137,7 @@ async def retrieve_subcription(callback: CallbackQuery, bot: Bot):
         return
     await bot.send_message(
         callback.from_user.id,
-        'У вас нет актуальной подписки, для её оформления перейдите в тарифы и оставьте заявку на покупу/активируйте пробный период',
+        'У вас нет актуальной подписки, для её оформления перейдите в тарифы и оставьте заявку на покупку',
         reply_markup=keyboards.payments_keyboard()
     )
 
