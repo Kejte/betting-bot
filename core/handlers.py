@@ -70,7 +70,7 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
     await bot.send_message(
         # photo=tariff['photo'],
         chat_id=callback.from_user.id,
-        caption = f'Тариф {callback.data.split('_')[-1]}\n\n'
+        text=f'Тариф {callback.data.split('_')[-1]}\n\n'
         f'{tariff['description']}\n\n'
         f'*— Период: {tariff['duration']}*\n\n'
         f'*— Цена: {tariff['cost']} RUB*',
