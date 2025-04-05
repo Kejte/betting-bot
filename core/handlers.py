@@ -67,8 +67,8 @@ async def retrieve_tariff(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
     tariff = get_tariff(callback.data.split('_')[-2])
-    await bot.send_photo(
-        photo=tariff['photo'],
+    await bot.send_message(
+        # photo=tariff['photo'],
         chat_id=callback.from_user.id,
         caption = f'Тариф {callback.data.split('_')[-1]}\n\n'
         f'{tariff['description']}\n\n'
