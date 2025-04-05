@@ -75,7 +75,6 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
 async def paginate_forks(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
-    print(callback.data)
     index = int(callback.data.split('_')[-4]) 
     permission = get_user_permission(callback.from_user.id)
     bookers = permission+'_'+callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
