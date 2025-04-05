@@ -75,13 +75,14 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
 async def paginate_forks(callback: CallbackQuery, bot: Bot):
     await bot.answer_callback_query(callback.id)
     await callback.message.delete()
+    print(callback.data)
     index = int(callback.data.split('_')[-4]) 
-    bookers = callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
     permission = get_user_permission(callback.from_user.id)
+    bookers = permission+'_'+callback.data.split('_')[-2]+'_'+callback.data.split('_')[-1]
     forks = get_cached_fork_data(permission + "_"+bookers)
     if not forks:
         module = importlib.import_module('core.constants')
-        url = getattr(module,bookers)
+        url = getattr(module,f'{bookers.split('_')[1]}_{bookers.split('_')[2]}')
         forks = parse_fork(link=url, permission=permission)
         cache_forks(forks, permission + "_"+bookers)
     fork = forks[index]
