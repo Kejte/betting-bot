@@ -7,7 +7,9 @@ class SessionGenerator:
     _session = None
 
     @classmethod
-    def get_session(cls):
+    def get_session(cls, permission: str = None):
+        if permission == 'free':
+            return requests.Session()
         if not cls._session:
             header = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36'}
 
