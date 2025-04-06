@@ -4,7 +4,7 @@ import requests
 
 def parse_fork(link, offset: int = None, permission: str = None):
     try:
-        if permission == 'freebet':
+        if permission == 'free':
             session = requests.Session()
         else:
             session = SessionGenerator.get_session(permission)

@@ -54,7 +54,7 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int, permission: 
         if not forks:
             module = importlib.import_module('core.constants')
             url = getattr(module,bookers)
-            forks = parse_fork(url, permission='freebet')
+            forks = parse_fork(url, permission=permission)
             cache_forks(forks, f'{permission}_'+bookers)
         booker = bookers.split('_')[0].lower()
         if not 'olimp' in bookers.split('_')[0].lower():

@@ -192,9 +192,9 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
         await bot.send_message(message.from_user.id, response, reply_markup=keyboards.freebet_fork_keyboard(index=0,lenght=len(forks),bookers=context['booker'],freebet=int(context['amount']),max_coeff=float(max_coeff)))
     except IndexError:
         await bot.send_message(message.from_user.id,'К сожалению в данный момент по данным критериям нет доступных вилок')
-    # except Exception as e:
-    #     print(e)
-    #     await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
+    except Exception as e:
+        print(e)
+        await bot.send_message(message.from_user.id,'Введите целочисленное значение или дробное через точку, если ограничений нет, то напишите слово нет')
 
 @router.callback_query(F.data.startswith('paginate_freebet'))
 async def paginate_freebet_forks(callback: CallbackQuery, bot: Bot):
