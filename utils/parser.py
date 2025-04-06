@@ -1,9 +1,13 @@
 from bs4 import BeautifulSoup
 from utils.session_generator import SessionGenerator
+import requests
 
 def parse_fork(link, offset: int = None, permission: str = None):
     try:
-        session = SessionGenerator.get_session(permission)
+        if permission == 'freebet':
+            session = requests.Session()
+        else:
+            session = SessionGenerator.get_session(permission)
 
         header = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36'}
         

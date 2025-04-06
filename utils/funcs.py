@@ -54,7 +54,7 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int, permission: 
         if not forks:
             module = importlib.import_module('core.constants')
             url = getattr(module,bookers)
-            forks = parse_fork(url, permission)
+            forks = parse_fork(url, permission='freebet')
             cache_forks(forks, f'{permission}_'+bookers)
         booker = bookers.split('_')[0].lower()
         if not 'olimp' in bookers.split('_')[0].lower():
@@ -65,20 +65,7 @@ def get_freebet_forks(bookers: str, max_coeff: float, freebet: int, permission: 
         forks = sorted(forks, key=lambda fork: calculate_freebet_profit(fork,freebet,booker), reverse=True)
         if permission == 'free':
             forks = [fork for fork in forks if calculate_freebet_profit(fork,freebet,booker)[-1] <= 60]
-        if len(forks) > 0:
-            cache_forks(forks, f'{permission}_FREEBET_{bookers.split('_')[0]}_{max_coeff}')
-        if len(forks) == 0 and permission == 'private':
-            module = importlib.import_module('core.constants')
-            url = getattr(module,bookers)
-            forks = parse_fork(url, permission)
-            cache_forks(forks, f'{permission}_'+bookers+'_2')
-            booker = bookers.split('_')[0].lower()
-            if not 'olimp' in bookers.split('_')[0].lower():
-                forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 2.05 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 2.05 and float(fork['coef_on_second_booker']) <= max_coeff)] 
-            else:
-                forks = [fork for fork in forks if (booker in fork['first_booker'].lower() and float(fork['coef_on_first_booker']) > 1.6 and float(fork['coef_on_first_booker']) <= max_coeff) or (booker in fork['second_booker'].lower() and float(fork['coef_on_second_booker'])> 1.6 and float(fork['coef_on_second_booker']) <= max_coeff)] 
-            forks = forks = [fork for fork in forks if calculate_freebet_profit(fork,freebet,booker)[-1] >= 50]
-            forks = sorted(forks, key=lambda fork: calculate_freebet_profit(fork,freebet,booker), reverse=True)
+        cache_forks(forks, f'{permission}_FREEBET_{bookers.split('_')[0]}_{max_coeff}')
         return forks
     return freebet_forks
 
