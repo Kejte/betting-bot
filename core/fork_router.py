@@ -132,7 +132,7 @@ async def calculate_fork(message: Message, bot: Bot, state: FSMContext):
     await message.answer(
         f'Сумма ставки на {context['first_booker']}: {round(bet_on_the_first_booker)}\n\n'
         f'Сумма ставки на {context['second_booker']}: {round(bet_on_the_second_booker)}\n\n'
-        f'Гарантированный доход: {round(profit,2)} руб.',
+        f'Доход: {round(profit,2)} руб.',
         reply_markup=keyboards.money_fork_calculating_keyboard(context['first_booker'],context['first_coef'],context['second_booker'],context['second_coef'],context['profit'])
     )
     await state.clear()
