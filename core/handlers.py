@@ -166,7 +166,7 @@ async def pre_create_purchase_request(callback: CallbackQuery, bot: Bot):
         f'— Сумма к оплате: {amount}\n\n'
         'После оплаты будет предоставлен доступ:\n\n'
         f'— Доступ к версии бота без ограничения % доходности на {tariff['duration']} дней/-я\n\n '
-        f'ℹ️ Оплачивая подписку, Вы принимаете условия [Публичной оферты](https://cloud.mail.ru/public/kHDS/JWPCnnFLT)',
+        f'ℹ️ Оплачивая подписку, Вы принимаете условия [Публичной оферты](https://cloud.mail.ru/public/dV6X/6UbNffcKZ)',
         parse_mode='Markdown',
         reply_markup=keyboards.pre_purchace_keyboard(callback.data.split('_')[-1], amount)
     )
