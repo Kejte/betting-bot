@@ -215,7 +215,7 @@ async def update_purchase_request(callback: CallbackQuery, bot: Bot):
             tariffs = get_tariffs()
             await bot.send_message(
                 callback.data.split('_')[-2],
-                f'По некоторым причинам ваша заявка на преобретение тарифа отклонена, создайте новую подписку или обратитесь в техническую поддержку.',
+                f'По некоторым причинам ваша заявка на преобретение тарифа отклонена, обратитесь в личные сообщения на аккаунт @Kejte_J.',
                 reply_markup=keyboards.tariffs_keyboard(tariffs=tariffs)
             )
         case 'accept':
