@@ -1,7 +1,7 @@
 from utils.caching import cache_forks, get_cached_fork_data, get_cached_user
 from utils.parser import parse_fork
 import importlib
-from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL, CREATE_TECH_SUPPORT_TICKET_URL, CREATE_UPDATE_TICKET_URL, GET_UPDATE_LOG_URL, CREATE_PURCHASE_REQUEST_URL, UPDATE_PAYMENT_URL, SUBSCRIPTION_URL, ACTIVATE_TRIAL_URL, PROMOCODES_URL, ACTIVATED_PROMOCODES_URL, PROMOCODE_URL, ACTIVATE_PROMOCODE_URL, GET_ACTIVATED_PROMOCODE_URL
+from core.constants import TARIFFS_URL, SECRET_KEY, TARIFF_URL, CREATE_TECH_SUPPORT_TICKET_URL, CREATE_UPDATE_TICKET_URL, GET_UPDATE_LOG_URL, CREATE_PURCHASE_REQUEST_URL, UPDATE_PAYMENT_URL, SUBSCRIPTION_URL, ACTIVATE_TRIAL_URL, PROMOCODES_URL, ACTIVATED_PROMOCODES_URL, PROMOCODE_URL, ACTIVATE_PROMOCODE_URL, GET_ACTIVATED_PROMOCODE_URL, REFERAL_ACCOUNT_URL, UPDATE_PROFILE_URL, CREATE_PROFILE_URL, ALL_PROFILES_URL
 import requests
 
 def generate_fork_message(fork: dict):
@@ -165,3 +165,52 @@ def activate_promocode(promo_id: int, tg_id: int):
 def get_activated_promocode(tg_id: int, tariff_id: int):
     res = requests.get(GET_ACTIVATED_PROMOCODE_URL+f'?tg_id={tg_id}&tariff_id={tariff_id}',headers={'Secret-Key': SECRET_KEY})
     return res.json() if res.status_code == 200 else None
+
+def get_refferal_account(tg_id: int):
+    try:
+        return requests.get(REFERAL_ACCOUNT_URL+f'?tg_id={tg_id}',headers={'Secret-Key': SECRET_KEY}).json()
+    except Exception:
+        return None
+
+def create_refferal_account(tg_id:int, ref_url: str):
+    json = {
+        'profile': tg_id,
+        'referal_url': ref_url
+    }
+    return requests.post(REFERAL_ACCOUNT_URL, headers={'Secret-Key': SECRET_KEY},data=json).json()
+
+def update_refferal_account(tg_id: int):
+    return requests.put(REFERAL_ACCOUNT_URL+f'?tg_id={tg_id}', headers={'Secret-Key': SECRET_KEY})
+
+def update_profile(tg_id: int, reffer: int):
+    json = {
+        'referrer': reffer
+    }
+    req = requests.put(
+                            UPDATE_PROFILE_URL + tg_id,
+                            json=json,
+                            headers={'Secret-Key': SECRET_KEY}
+                        )
+
+def create_profile(tg_id: int, username: str, refferer: int = None):
+    if not username:
+        username = 'None'
+    if refferer:
+        json = {
+                            'tg_id': tg_id,
+                            'username': '@'+username,
+                            'referrer': refferer
+                        }
+    else:
+       json = {
+                            'tg_id': tg_id,
+                            'username': '@'+username,
+                        } 
+    requests.post(
+                        CREATE_PROFILE_URL,
+                        json=json,
+                        headers={'Secret-Key': SECRET_KEY}
+                    )
+
+def all_profiles():
+    return requests.get(ALL_PROFILES_URL,headers={'Secret-Key': SECRET_KEY}).json()['profiles']

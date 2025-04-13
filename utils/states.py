@@ -12,3 +12,7 @@ class TechSupportState(StatesGroup):
 
 class UpdateTicketState(StatesGroup):
     GET_TICKET_TEXT=State()
+
+class MailingState(StatesGroup):
+    GET_TELEGRAM_ID=State()
+    GET_MESSAGE=State()

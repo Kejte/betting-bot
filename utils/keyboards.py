@@ -9,11 +9,11 @@ def hello_keyboard(tg_id: int) -> InlineKeyboardMarkup:
     builder.button(text='💲 Найти денежную вилку', callback_data='search_money_fork')
     builder.button(text='🎁 Найти фрибетную вилку', callback_data='search_freebet_fork')
     builder.button(text='🗓 Настройки подписки', callback_data='payments')
-
+    builder.button(text='🫂 Реферальная программа', callback_data='refferal_system')
     builder.button(text='🧑‍💻 Обратная связь', callback_data='feedback')
     builder.button(text='🆕 Что нового?', callback_data='update_log')
 
-    if tg_id == MANAGER:
+    if tg_id == int(MANAGER):
         builder.button(text='Админ панель', callback_data='admin')
     
     builder.adjust(1)
@@ -211,6 +211,35 @@ def activated_promocode_keyboard(tariff_id: int):
 
     builder.button(text='💳 Перейти к оплате', callback_data=f'pre_purchase_tariff_{tariff_id}')
     builder.button(text='⬅️ Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def referal_panel_keyboard(tg_id: int, username: str):
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='💳 Заказть выплату', callback_data=f'payout_{tg_id}_{username}')
+    builder.button(text='⬅️ Назад в меню', callback_data='main_menu')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def accept_payout_keyboard(tg_id:int):
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Подтвердить выплату', callback_data=f'accept_payout_{tg_id}')
+
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+def admin_pannel_keyboard():
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text='Написать человеку', callback_data='mail_user')
+    builder.button(text='Разослать обновление', callback_data='update_log_mailing')
 
     builder.adjust(1)
 
