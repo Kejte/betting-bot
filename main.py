@@ -57,6 +57,14 @@ async def load_bot():
     dp.callback_query.register(handlers.get_promocodes_list,F.data.startswith('promocodes'))
     dp.callback_query.register(handlers.retrieve_promocode_message,F.data.startswith('promocode'))    
     dp.callback_query.register(handlers.activate_promocode_handler, F.data.startswith('activate_promo'))
+    dp.callback_query.register(handlers.refferal_program, F.data == 'refferal_system')
+    dp.callback_query.register(handlers.payout_request, F.data.startswith('payout_'))
+    dp.callback_query.register(handlers.accept_payout_request, F.data.startswith('accept_payout_'))
+    dp.callback_query.register(handlers.get_user_id_for_mailing, F.data == 'mail_user')
+    dp.message.register(handlers.get_message_for_mailing, states.MailingState.GET_TELEGRAM_ID)
+    dp.message.register(handlers.mail_message, states.MailingState.GET_MESSAGE)
+    dp.callback_query.register(handlers.admin_pannel, F.data == 'admin')
+    dp.callback_query.register(handlers.mailing_update_log, F.data == 'update_log_mailing')
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)

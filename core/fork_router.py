@@ -41,7 +41,8 @@ async def search_fork(callback: CallbackQuery, bot: Bot):
     await bot.send_message(
         callback.from_user.id,
         f'Вы выбрали {callback.data.split('_')[-2]} - {second_booker}\n\n'
-        'Ищу вилку'
+        'Ищу вилку\n\n'
+        f'ℹ️ Никакая информация, предоставленная Сервисом, не может рассматриваться как инструкция к распоряжению денежными средствами Пользователя или предоставление определенных гарантий Пользователю при распоряжении им своим имуществом'
     )
     bookers = f'{callback.data.split('_')[-2]}_{callback.data.split('_')[-1]}'.upper()
     permission = get_user_permission(callback.from_user.id)
@@ -182,7 +183,8 @@ async def freebet_forks(message: Message, bot: Bot, state: FSMContext):
             'Ищу вилку подходящую вашим параметрам\n\n'
             f'Выбранный букмекер: {context['booker'][0] + context["booker"].split('_')[0][1:].lower()}\n\n'
             f'Номинал фрибета: {context['amount']}\n\n'
-            f'Ограничение по коэффиценту: {max_coeff}' 
+            f'Ограничение по коэффиценту: {max_coeff}\n\n'
+            f'ℹ️ Никакая информация, предоставленная Сервисом, не может рассматриваться как инструкция к распоряжению денежными средствами Пользователя или предоставление определенных гарантий Пользователю при распоряжении им своим имуществом' 
         )
         permission = get_user_permission(message.from_user.id)
         forks = get_freebet_forks(context['booker'], float(max_coeff), int(context['amount']), permission)

@@ -1,23 +1,38 @@
 from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from utils import keyboards
+from aiogram.filters import Command
 
 from aiogram.fsm.context import FSMContext
-from utils.states import TechSupportState, UpdateTicketState
-from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial, generate_fork_message, get_promocodes, get_promocodes_status, retrieve_promocode, activate_promocode, get_activated_promocode
+from utils.states import TechSupportState, UpdateTicketState, MailingState
+from utils.funcs import get_tariffs, get_tariff, create_tech_support_ticket, create_update_support_ticket, get_update_log, create_purchase_tariff, update_purchase_status, get_subscribe, activate_trial, generate_fork_message, get_promocodes, get_promocodes_status, retrieve_promocode, activate_promocode, get_activated_promocode, get_refferal_account, create_refferal_account, create_profile, update_refferal_account, all_profiles
 from core.constants import MANAGER, GROUP_ID
-from utils.caching import cache_profile
+from utils.caching import cache_profile, check_cached_user
 from utils.parser import parse_fork
-from core.constants import MAX_MONEY_FORK_URL, FORK_CHAT_ID
+from core.constants import MAX_MONEY_FORK_URL, FORK_CHAT_ID, REGISTRY_PROFILE_URL, SECRET_KEY
 import datetime
 import pytz
+from aiogram.utils.deep_linking import decode_payload, create_start_link
+import requests
 
-async def hello_message(callback: CallbackQuery, bot: Bot):
+async def hello_message(callback: CallbackQuery, bot: Bot, command: Command = None):
     try:
         await callback.message.delete()
         await bot.answer_callback_query(callback.id)
     except AttributeError:
         ...
+    if not check_cached_user(callback.from_user.id):
+        profile_exists = requests.get(REGISTRY_PROFILE_URL + str(callback.from_user.id), headers={'Secret-Key': SECRET_KEY})
+        if profile_exists.status_code == 400:
+            if command:
+                    args = command.args
+                    referrer = decode_payload(args)
+                    create_profile(tg_id=callback.from_user.id,username=callback.from_user.username, refferer=referrer)
+                    cache_profile(tg_id=callback.from_user.id,permission='free')
+                    print(referrer)
+            else:
+                    create_profile(tg_id=callback.from_user.id,username=callback.from_user.username)
+                    cache_profile(tg_id=callback.from_user.id,permission='free')
     await bot.send_message(
         callback.from_user.id,
         'Привет!\n\n'
@@ -307,4 +322,96 @@ async def activate_promocode_handler(callback: CallbackQuery, bot: Bot):
         )
     return
 
+async def refferal_program(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    acc = get_refferal_account(callback.from_user.id)
+    if not acc:
+        ref_url = await create_start_link(bot,str(callback.from_user.id),encode=True)
+        acc = create_refferal_account(callback.from_user.id, ref_url)
+    await bot.send_message(
+            callback.from_user.id,
+            f'*Информация о вашем аккаунте в реферальной программе:*\n\n'
+            f'💳 *Баланс: {acc['balance']} RUB*.\n\n'
+            f'🫂 *Кол-во рефералов: {acc['referal_count']}*\n\n'
+            f'💰 *Заработано за всё время: {acc['total_earnings']} RUB.*\n\n'
+            f'🔗 *Ваша реферальная ссылка*: {acc['referal_url']}',
+            parse_mode='Markdown',
+            reply_markup=keyboards.referal_panel_keyboard(callback.from_user.id, callback.from_user.username)
+        )
 
+async def payout_request(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    balance = get_refferal_account(callback.from_user.id)['balance']
+    await bot.send_message(
+        GROUP_ID,
+        f'Пользователь @{''.join(callback.data.split('_')[2:])} ({callback.data.split('_')[1]}) оставил заявку на вывод баланса реферальной программы на {balance} RUB.',
+        message_thread_id=328,
+        reply_markup=keyboards.accept_payout_keyboard(callback.data.split('_')[1])
+    )
+    await bot.send_message(
+        callback.from_user.id,
+        f'Вы оставили заявку на вывод средств с баланса реферальной программы, скоро с вами свяжется администратор, для уточнения деталей',
+        reply_markup=keyboards.cancel_keyboard()
+    )
+
+async def accept_payout_request(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    tg_id = callback.data.split('_')[-1]
+    update_refferal_account(tg_id)
+
+async def admin_pannel(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    await bot.send_message(
+        callback.from_user.id,
+        'Выберите действие:',
+        reply_markup=keyboards.admin_pannel_keyboard()
+    )
+
+async def get_user_id_for_mailing(callback: CallbackQuery, bot: Bot, state: FSMContext):
+    await bot.send_message(
+        callback.from_user.id,
+        'Введите телеграм айди пользователя',
+    )
+    await state.set_state(MailingState.GET_TELEGRAM_ID)
+
+async def get_message_for_mailing(message: Message, bot: Bot, state: FSMContext):
+    await state.update_data(tg_id=message.text)
+    await bot.send_message(
+        message.from_user.id,
+        'Введите сообщение для пользователя'
+    )
+    await state.set_state(MailingState.GET_MESSAGE)
+
+async def mail_message(message: Message, bot: Bot, state: FSMContext):
+    context = await state.get_data()
+    await bot.send_message(
+        context['tg_id'],
+        message.text
+    )
+    await bot.send_message(
+        message.from_user.id,
+        'Ваше сообщение доставлено пользователю',
+        reply_markup=keyboards.cancel_keyboard()
+    )
+
+async def mailing_update_log(callback: CallbackQuery, bot: Bot):
+    await bot.answer_callback_query(callback.id)
+    await callback.message.delete()
+    data = get_update_log()
+    profiles = all_profiles()
+    for profile in profiles:
+        await bot.send_message(
+            profile,
+            f'Обновление от {data['created_at']}\n\n'
+            f'{data['text']}',
+            reply_markup=keyboards.hello_keyboard(profile)
+        )
+    await bot.send_message(
+        callback.from_user.id,
+        'Рассылка отправлена',
+        reply_markup=keyboards.cancel_keyboard()
+    )
