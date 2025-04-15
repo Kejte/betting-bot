@@ -24,15 +24,18 @@ async def hello_message(callback: CallbackQuery, bot: Bot, command: Command = No
     if not check_cached_user(callback.from_user.id):
         profile_exists = requests.get(REGISTRY_PROFILE_URL + str(callback.from_user.id), headers={'Secret-Key': SECRET_KEY})
         if profile_exists.status_code == 400:
-            if command:
-                    args = command.args
-                    referrer = decode_payload(args)
-                    create_profile(tg_id=callback.from_user.id,username=callback.from_user.username, refferer=referrer)
-                    cache_profile(tg_id=callback.from_user.id,permission='free')
-                    print(referrer)
-            else:
-                    create_profile(tg_id=callback.from_user.id,username=callback.from_user.username)
-                    cache_profile(tg_id=callback.from_user.id,permission='free')
+            try:
+                if command:
+                        args = command.args
+                        referrer = decode_payload(args)
+                        create_profile(tg_id=callback.from_user.id,username=callback.from_user.username, refferer=referrer)
+                        cache_profile(tg_id=callback.from_user.id,permission='free')
+                        print(referrer)
+                else:
+                        create_profile(tg_id=callback.from_user.id,username=callback.from_user.username)
+                        cache_profile(tg_id=callback.from_user.id,permission='free')
+            except Exception:
+                ...
     await bot.send_message(
         callback.from_user.id,
         'Привет!\n\n'
