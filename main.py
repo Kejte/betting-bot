@@ -68,8 +68,8 @@ async def load_bot():
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)
-        loop = asyncio.get_event_loop()
-        loop.create_task(shedule_message(bot))
+        # loop = asyncio.get_event_loop()
+        # loop.create_task(shedule_message(bot))
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
