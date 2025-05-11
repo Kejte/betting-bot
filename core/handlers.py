@@ -271,7 +271,8 @@ async def get_max_money_fork(bot: Bot):
     
     await bot.send_message(
         FORK_CHAT_ID,
-        res
+        res,
+        message_thread_id=11
     )
 
 async def get_promocodes_list(callback: CallbackQuery, bot: Bot):
